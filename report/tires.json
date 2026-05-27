@@ -1,0 +1,182 @@
+[
+  {
+    "key": [
+      355.6,
+      152.4,
+      295.0
+    ],
+    "label": "6.0Jx14\"  (~77% AR, R=295mm)",
+    "rim_diameter_mm": 355.6,
+    "rim_diameter_in": 14.0,
+    "rim_width_mm": 152.4,
+    "rim_width_in": 6.0,
+    "loaded_radius_mm": 295.0,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "BMW 325i (E30) (1987)"
+    ]
+  },
+  {
+    "key": [
+      381.0,
+      101.6,
+      null
+    ],
+    "label": "4.0Jx15\"",
+    "rim_diameter_mm": 381.0,
+    "rim_diameter_in": 15.0,
+    "rim_width_mm": 101.6,
+    "rim_width_in": 4.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Citroën 2CV6 (1979)"
+    ]
+  },
+  {
+    "key": [
+      381.0,
+      152.4,
+      null
+    ],
+    "label": "6.0Jx15\"",
+    "rim_diameter_mm": 381.0,
+    "rim_diameter_in": 15.0,
+    "rim_width_mm": 152.4,
+    "rim_width_in": 6.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Alfa Romeo 75 (Tipo 162) (1988)"
+    ]
+  },
+  {
+    "key": [
+      381.0,
+      177.8,
+      null
+    ],
+    "label": "7.0Jx15\"",
+    "rim_diameter_mm": 381.0,
+    "rim_diameter_in": 15.0,
+    "rim_width_mm": 177.8,
+    "rim_width_in": 7.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Chevrolet Corvette C3 (1972)"
+    ]
+  },
+  {
+    "key": [
+      406.4,
+      165.1,
+      null
+    ],
+    "label": "6.5Jx16\"",
+    "rim_diameter_mm": 406.4,
+    "rim_diameter_in": 16.0,
+    "rim_width_mm": 165.1,
+    "rim_width_in": 6.5,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Example FF Hatchback (2024)"
+    ]
+  },
+  {
+    "key": [
+      406.4,
+      177.8,
+      null
+    ],
+    "label": "7.0Jx16\"",
+    "rim_diameter_mm": 406.4,
+    "rim_diameter_in": 16.0,
+    "rim_width_mm": 177.8,
+    "rim_width_in": 7.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Example FF Hatchback (2024)"
+    ]
+  },
+  {
+    "key": [
+      457.2,
+      203.2,
+      null
+    ],
+    "label": "8.0Jx18\"",
+    "rim_diameter_mm": 457.2,
+    "rim_diameter_in": 18.0,
+    "rim_width_mm": 203.2,
+    "rim_width_in": 8.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Example 4WD Pickup (2024)"
+    ]
+  },
+  {
+    "key": [
+      508.0,
+      228.6,
+      null
+    ],
+    "label": "9.0Jx20\"",
+    "rim_diameter_mm": 508.0,
+    "rim_diameter_in": 20.0,
+    "rim_width_mm": 228.6,
+    "rim_width_in": 9.0,
+    "loaded_radius_mm": null,
+    "corner_counts": {
+      "FL": 1,
+      "FR": 1,
+      "RL": 1,
+      "RR": 1
+    },
+    "car_count": 1,
+    "cars": [
+      "Example AWD EV Sedan (2024)"
+    ]
+  }
+]

@@ -1,0 +1,982 @@
+[
+  {
+    "source": "test_library_multilevel.zip!/alfa/alfa_75.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Alfa Romeo",
+    "model": "75 (Tipo 162)",
+    "year": 1988,
+    "variant": "2.0 Twin Spark",
+    "drive_type": "RWD",
+    "is_ev": false,
+    "mass_total_kg": 1180.0,
+    "wheelbase_m": 2.51,
+    "track_front_m": 1.382,
+    "track_rear_m": 1.34,
+    "cog_height_m": 0.47,
+    "front_weight_fraction": 0.5298804780876494,
+    "steering_type": "rack_and_pinion",
+    "steering_ratio": 16.7,
+    "topology_front": "double_wishbone",
+    "topology_rear": "de_dion",
+    "spring_rate_front_Nm": 20000.0,
+    "spring_rate_rear_Nm": 22000.0,
+    "peak_torque_Nm": 185.0,
+    "peak_torque_rpm": 4500.0,
+    "peak_power_kW": 103.67255756846318,
+    "peak_power_hp": 139.02489969930912,
+    "peak_power_rpm": 6000.0,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": 2.0,
+    "engine_configuration": "I4",
+    "gearbox_type": "manual",
+    "gear_count": 5,
+    "final_drive": 4.1,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "double_wishbone",
+        "spring_type": "torsion_bar",
+        "spring_rate_Nm": 20000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "FR": {
+        "topology": "double_wishbone",
+        "spring_type": "torsion_bar",
+        "spring_rate_Nm": 20000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RL": {
+        "topology": "de_dion",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RR": {
+        "topology": "de_dion",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          381.0,
+          152.4,
+          null
+        ],
+        "label": "6.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 17.0,
+        "wheel_inertia_kgm2": 0.75
+      },
+      "FR": {
+        "key": [
+          381.0,
+          152.4,
+          null
+        ],
+        "label": "6.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 17.0,
+        "wheel_inertia_kgm2": 0.75
+      },
+      "RL": {
+        "key": [
+          381.0,
+          152.4,
+          null
+        ],
+        "label": "6.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 17.0,
+        "wheel_inertia_kgm2": 0.75
+      },
+      "RR": {
+        "key": [
+          381.0,
+          152.4,
+          null
+        ],
+        "label": "6.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 17.0,
+        "wheel_inertia_kgm2": 0.75
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 4,
+    "power_to_weight_kW_per_tonne": 87.85809963429084,
+    "completeness_pct": 92.6
+  },
+  {
+    "source": "test_library_multilevel.zip!/deep/sub/bmw_e30.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "BMW",
+    "model": "325i (E30)",
+    "year": 1987,
+    "variant": "US 2-door",
+    "drive_type": "RWD",
+    "is_ev": false,
+    "mass_total_kg": 1275.0,
+    "wheelbase_m": 2.57,
+    "track_front_m": 1.407,
+    "track_rear_m": 1.415,
+    "cog_height_m": 0.48,
+    "front_weight_fraction": 0.5299610894941634,
+    "steering_type": "rack_and_pinion",
+    "steering_ratio": 20.5,
+    "topology_front": "macpherson",
+    "topology_rear": "semi_trailing_arm",
+    "spring_rate_front_Nm": 22000.0,
+    "spring_rate_rear_Nm": 24000.0,
+    "peak_torque_Nm": 226.0,
+    "peak_torque_rpm": 4000.0,
+    "peak_power_kW": 127.5486617357456,
+    "peak_power_hp": 171.04275538763486,
+    "peak_power_rpm": 5800.0,
+    "engine_idle_rpm": 750.0,
+    "engine_max_rpm": 6350.0,
+    "engine_displacement_cc": 2.494,
+    "engine_configuration": "I6",
+    "gearbox_type": "manual",
+    "gear_count": 5,
+    "final_drive": 3.73,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "macpherson",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": "vented",
+        "brake_disc_mm": 260.0,
+        "estimated": true
+      },
+      "FR": {
+        "topology": "macpherson",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": "vented",
+        "brake_disc_mm": 260.0,
+        "estimated": true
+      },
+      "RL": {
+        "topology": "semi_trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 24000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": "solid",
+        "brake_disc_mm": 258.0,
+        "estimated": true
+      },
+      "RR": {
+        "topology": "semi_trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 24000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": "solid",
+        "brake_disc_mm": 258.0,
+        "estimated": true
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          355.6,
+          152.4,
+          295.0
+        ],
+        "label": "6.0Jx14\"  (~77% AR, R=295mm)",
+        "rim_diameter_mm": 355.6,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": 295.0,
+        "wheel_mass_kg": 18.0,
+        "wheel_inertia_kgm2": 0.82
+      },
+      "FR": {
+        "key": [
+          355.6,
+          152.4,
+          295.0
+        ],
+        "label": "6.0Jx14\"  (~77% AR, R=295mm)",
+        "rim_diameter_mm": 355.6,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": 295.0,
+        "wheel_mass_kg": 18.0,
+        "wheel_inertia_kgm2": 0.82
+      },
+      "RL": {
+        "key": [
+          355.6,
+          152.4,
+          295.0
+        ],
+        "label": "6.0Jx14\"  (~77% AR, R=295mm)",
+        "rim_diameter_mm": 355.6,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": 295.0,
+        "wheel_mass_kg": 18.0,
+        "wheel_inertia_kgm2": 0.82
+      },
+      "RR": {
+        "key": [
+          355.6,
+          152.4,
+          295.0
+        ],
+        "label": "6.0Jx14\"  (~77% AR, R=295mm)",
+        "rim_diameter_mm": 355.6,
+        "rim_width_mm": 152.4,
+        "loaded_radius_mm": 295.0,
+        "wheel_mass_kg": 18.0,
+        "wheel_inertia_kgm2": 0.82
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 4,
+    "power_to_weight_kW_per_tonne": 100.03816606725145,
+    "completeness_pct": 100.0
+  },
+  {
+    "source": "test_library_multilevel.zip!/citroen_2cv.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Citroën",
+    "model": "2CV6",
+    "year": 1979,
+    "variant": "602cc",
+    "drive_type": "FWD",
+    "is_ev": false,
+    "mass_total_kg": 590.0,
+    "wheelbase_m": 2.4,
+    "track_front_m": 1.26,
+    "track_rear_m": 1.26,
+    "cog_height_m": 0.5,
+    "front_weight_fraction": 0.5416666666666666,
+    "steering_type": "rack_and_pinion",
+    "steering_ratio": 18.0,
+    "topology_front": "trailing_arm",
+    "topology_rear": "trailing_arm",
+    "spring_rate_front_Nm": 8000.0,
+    "spring_rate_rear_Nm": 8000.0,
+    "peak_torque_Nm": 39.0,
+    "peak_torque_rpm": 3000.0,
+    "peak_power_kW": 18.430676901060117,
+    "peak_power_hp": 24.715537724321617,
+    "peak_power_rpm": 5500.0,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": 0.602,
+    "engine_configuration": "flat2",
+    "gearbox_type": "manual",
+    "gear_count": 4,
+    "final_drive": 3.875,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 8000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "FR": {
+        "topology": "trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 8000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RL": {
+        "topology": "trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 8000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RR": {
+        "topology": "trailing_arm",
+        "spring_type": "coil",
+        "spring_rate_Nm": 8000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          381.0,
+          101.6,
+          null
+        ],
+        "label": "4.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 101.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 10.0,
+        "wheel_inertia_kgm2": 0.4
+      },
+      "FR": {
+        "key": [
+          381.0,
+          101.6,
+          null
+        ],
+        "label": "4.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 101.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 10.0,
+        "wheel_inertia_kgm2": 0.4
+      },
+      "RL": {
+        "key": [
+          381.0,
+          101.6,
+          null
+        ],
+        "label": "4.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 101.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 10.0,
+        "wheel_inertia_kgm2": 0.4
+      },
+      "RR": {
+        "key": [
+          381.0,
+          101.6,
+          null
+        ],
+        "label": "4.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 101.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 10.0,
+        "wheel_inertia_kgm2": 0.4
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 4,
+    "power_to_weight_kW_per_tonne": 31.238435425525623,
+    "completeness_pct": 92.6
+  },
+  {
+    "source": "test_library_multilevel.zip!/american/corvette.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Chevrolet",
+    "model": "Corvette C3",
+    "year": 1972,
+    "variant": "350ci Coupe",
+    "drive_type": "RWD",
+    "is_ev": false,
+    "mass_total_kg": 1530.0,
+    "wheelbase_m": 2.489,
+    "track_front_m": 1.473,
+    "track_rear_m": 1.524,
+    "cog_height_m": 0.46,
+    "front_weight_fraction": 0.5299316994777019,
+    "steering_type": "rack_and_pinion",
+    "steering_ratio": 17.6,
+    "topology_front": "double_wishbone",
+    "topology_rear": "chapman_strut",
+    "spring_rate_front_Nm": 24000.0,
+    "spring_rate_rear_Nm": 19000.0,
+    "peak_torque_Nm": 420.0,
+    "peak_torque_rpm": 3500.0,
+    "peak_power_kW": 195.8259420737638,
+    "peak_power_hp": 262.6025883209172,
+    "peak_power_rpm": 5500.0,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": 5.735,
+    "engine_configuration": "V8",
+    "gearbox_type": "manual",
+    "gear_count": 4,
+    "final_drive": 3.36,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "double_wishbone",
+        "spring_type": "coil",
+        "spring_rate_Nm": 24000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "FR": {
+        "topology": "double_wishbone",
+        "spring_type": "coil",
+        "spring_rate_Nm": 24000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RL": {
+        "topology": "chapman_strut",
+        "spring_type": "coil",
+        "spring_rate_Nm": 19000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      },
+      "RR": {
+        "topology": "chapman_strut",
+        "spring_type": "coil",
+        "spring_rate_Nm": 19000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": true
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          381.0,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 20.0,
+        "wheel_inertia_kgm2": 0.95
+      },
+      "FR": {
+        "key": [
+          381.0,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 20.0,
+        "wheel_inertia_kgm2": 0.95
+      },
+      "RL": {
+        "key": [
+          381.0,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 20.0,
+        "wheel_inertia_kgm2": 0.95
+      },
+      "RR": {
+        "key": [
+          381.0,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx15\"",
+        "rim_diameter_mm": 381.0,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": 20.0,
+        "wheel_inertia_kgm2": 0.95
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 4,
+    "power_to_weight_kW_per_tonne": 127.99081181291751,
+    "completeness_pct": 92.6
+  },
+  {
+    "source": "test_library_multilevel.zip!/skeletons/4wd_pickup.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Example",
+    "model": "4WD Pickup",
+    "year": 2024,
+    "variant": "Skeleton",
+    "drive_type": "4WD",
+    "is_ev": false,
+    "mass_total_kg": 2400.0,
+    "wheelbase_m": 3.2,
+    "track_front_m": 1.68,
+    "track_rear_m": 1.7,
+    "cog_height_m": 0.62,
+    "front_weight_fraction": 0.515625,
+    "steering_type": null,
+    "steering_ratio": null,
+    "topology_front": "macpherson",
+    "topology_rear": "solid_axle",
+    "spring_rate_front_Nm": 30000.0,
+    "spring_rate_rear_Nm": 35000.0,
+    "peak_torque_Nm": 380.0,
+    "peak_torque_rpm": 2500.0,
+    "peak_power_kW": 172.78759594743866,
+    "peak_power_hp": 231.70816616551525,
+    "peak_power_rpm": 5500.0,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": 3.5,
+    "engine_configuration": "V6",
+    "gearbox_type": "auto",
+    "gear_count": 6,
+    "final_drive": 3.727,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "macpherson",
+        "spring_type": "coil",
+        "spring_rate_Nm": 30000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "FR": {
+        "topology": "macpherson",
+        "spring_type": "coil",
+        "spring_rate_Nm": 30000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RL": {
+        "topology": "solid_axle",
+        "spring_type": "coil",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RR": {
+        "topology": "solid_axle",
+        "spring_type": "coil",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          457.2,
+          203.2,
+          null
+        ],
+        "label": "8.0Jx18\"",
+        "rim_diameter_mm": 457.2,
+        "rim_width_mm": 203.2,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "FR": {
+        "key": [
+          457.2,
+          203.2,
+          null
+        ],
+        "label": "8.0Jx18\"",
+        "rim_diameter_mm": 457.2,
+        "rim_width_mm": 203.2,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RL": {
+        "key": [
+          457.2,
+          203.2,
+          null
+        ],
+        "label": "8.0Jx18\"",
+        "rim_diameter_mm": 457.2,
+        "rim_width_mm": 203.2,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RR": {
+        "key": [
+          457.2,
+          203.2,
+          null
+        ],
+        "label": "8.0Jx18\"",
+        "rim_diameter_mm": 457.2,
+        "rim_width_mm": 203.2,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 0,
+    "power_to_weight_kW_per_tonne": 71.99483164476611,
+    "completeness_pct": 85.2
+  },
+  {
+    "source": "test_library_multilevel.zip!/skeletons/nested/ev_sedan.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Example",
+    "model": "AWD EV Sedan",
+    "year": 2024,
+    "variant": "Skeleton",
+    "drive_type": "AWD",
+    "is_ev": true,
+    "mass_total_kg": 2100.0,
+    "wheelbase_m": 2.96,
+    "track_front_m": 1.62,
+    "track_rear_m": 1.64,
+    "cog_height_m": 0.42,
+    "front_weight_fraction": 0.4932432432432432,
+    "steering_type": null,
+    "steering_ratio": null,
+    "topology_front": "double_wishbone",
+    "topology_rear": "double_wishbone",
+    "spring_rate_front_Nm": 35000.0,
+    "spring_rate_rear_Nm": 35000.0,
+    "peak_torque_Nm": null,
+    "peak_torque_rpm": null,
+    "peak_power_kW": null,
+    "peak_power_hp": null,
+    "peak_power_rpm": null,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": null,
+    "engine_configuration": null,
+    "gearbox_type": null,
+    "gear_count": 0,
+    "final_drive": 9.0,
+    "battery_kwh": 82.0,
+    "corners": {
+      "FL": {
+        "topology": "double_wishbone",
+        "spring_type": "air",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "adjustable",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "FR": {
+        "topology": "double_wishbone",
+        "spring_type": "air",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "adjustable",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RL": {
+        "topology": "double_wishbone",
+        "spring_type": "air",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "adjustable",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RR": {
+        "topology": "double_wishbone",
+        "spring_type": "air",
+        "spring_rate_Nm": 35000.0,
+        "damper_type": "adjustable",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          508.0,
+          228.6,
+          null
+        ],
+        "label": "9.0Jx20\"",
+        "rim_diameter_mm": 508.0,
+        "rim_width_mm": 228.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "FR": {
+        "key": [
+          508.0,
+          228.6,
+          null
+        ],
+        "label": "9.0Jx20\"",
+        "rim_diameter_mm": 508.0,
+        "rim_width_mm": 228.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RL": {
+        "key": [
+          508.0,
+          228.6,
+          null
+        ],
+        "label": "9.0Jx20\"",
+        "rim_diameter_mm": 508.0,
+        "rim_width_mm": 228.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RR": {
+        "key": [
+          508.0,
+          228.6,
+          null
+        ],
+        "label": "9.0Jx20\"",
+        "rim_diameter_mm": 508.0,
+        "rim_width_mm": 228.6,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      }
+    },
+    "unique_tires_on_car": 1,
+    "estimated_corners": 0,
+    "power_to_weight_kW_per_tonne": null,
+    "completeness_pct": 59.3
+  },
+  {
+    "source": "test_library_multilevel.zip!/ff_hatch.svj.json",
+    "spec_version": "0.94",
+    "data_confidence": "low",
+    "make": "Example",
+    "model": "FF Hatchback",
+    "year": 2024,
+    "variant": "Skeleton",
+    "drive_type": "FWD",
+    "is_ev": false,
+    "mass_total_kg": 1350.0,
+    "wheelbase_m": 2.62,
+    "track_front_m": 1.54,
+    "track_rear_m": 1.53,
+    "cog_height_m": 0.48,
+    "front_weight_fraction": 0.5801526717557252,
+    "steering_type": "rack_and_pinion",
+    "steering_ratio": 14.0,
+    "topology_front": "macpherson",
+    "topology_rear": "torsion_beam",
+    "spring_rate_front_Nm": 25000.0,
+    "spring_rate_rear_Nm": 22000.0,
+    "peak_torque_Nm": 200.0,
+    "peak_torque_rpm": 3000.0,
+    "peak_power_kW": 108.90854532444617,
+    "peak_power_hp": 146.0463592800823,
+    "peak_power_rpm": 6500.0,
+    "engine_idle_rpm": null,
+    "engine_max_rpm": null,
+    "engine_displacement_cc": null,
+    "engine_configuration": null,
+    "gearbox_type": "manual",
+    "gear_count": 6,
+    "final_drive": 3.944,
+    "battery_kwh": null,
+    "corners": {
+      "FL": {
+        "topology": "macpherson",
+        "spring_type": "coilover",
+        "spring_rate_Nm": 25000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "FR": {
+        "topology": "macpherson",
+        "spring_type": "coilover",
+        "spring_rate_Nm": 25000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RL": {
+        "topology": "torsion_beam",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      },
+      "RR": {
+        "topology": "torsion_beam",
+        "spring_type": "coil",
+        "spring_rate_Nm": 22000.0,
+        "damper_type": "twin_tube",
+        "damper_bump_points": 3,
+        "damper_rebound_points": 3,
+        "brake_disc_type": null,
+        "brake_disc_mm": null,
+        "estimated": false
+      }
+    },
+    "tires_by_corner": {
+      "FL": {
+        "key": [
+          406.4,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx16\"",
+        "rim_diameter_mm": 406.4,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "FR": {
+        "key": [
+          406.4,
+          177.8,
+          null
+        ],
+        "label": "7.0Jx16\"",
+        "rim_diameter_mm": 406.4,
+        "rim_width_mm": 177.8,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RL": {
+        "key": [
+          406.4,
+          165.1,
+          null
+        ],
+        "label": "6.5Jx16\"",
+        "rim_diameter_mm": 406.4,
+        "rim_width_mm": 165.1,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      },
+      "RR": {
+        "key": [
+          406.4,
+          165.1,
+          null
+        ],
+        "label": "6.5Jx16\"",
+        "rim_diameter_mm": 406.4,
+        "rim_width_mm": 165.1,
+        "loaded_radius_mm": null,
+        "wheel_mass_kg": null,
+        "wheel_inertia_kgm2": null
+      }
+    },
+    "unique_tires_on_car": 2,
+    "estimated_corners": 0,
+    "power_to_weight_kW_per_tonne": 80.67299653662678,
+    "completeness_pct": 85.2
+  }
+]

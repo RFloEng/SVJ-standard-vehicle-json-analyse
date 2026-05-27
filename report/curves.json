@@ -1,0 +1,1516 @@
+[
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1500,
+        130
+      ],
+      [
+        3000,
+        175
+      ],
+      [
+        4500,
+        185
+      ],
+      [
+        6000,
+        165
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1500.0,
+        20.420352248333653
+      ],
+      [
+        3000.0,
+        54.977871437821385
+      ],
+      [
+        4500.0,
+        87.17919613711676
+      ],
+      [
+        6000.0,
+        103.67255756846318
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        480
+      ],
+      [
+        0.2,
+        1200
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        720
+      ],
+      [
+        0.2,
+        1800
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        480
+      ],
+      [
+        0.2,
+        1200
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        720
+      ],
+      [
+        0.2,
+        1800
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        450
+      ],
+      [
+        0.2,
+        1150
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        680
+      ],
+      [
+        0.2,
+        1700
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        450
+      ],
+      [
+        0.2,
+        1150
+      ]
+    ]
+  },
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        680
+      ],
+      [
+        0.2,
+        1700
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1000,
+        140
+      ],
+      [
+        2000,
+        190
+      ],
+      [
+        3000,
+        215
+      ],
+      [
+        4000,
+        226
+      ],
+      [
+        5000,
+        220
+      ],
+      [
+        5800,
+        210
+      ],
+      [
+        6350,
+        190
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1000.0,
+        14.660765716752367
+      ],
+      [
+        2000.0,
+        39.79350694547071
+      ],
+      [
+        3000.0,
+        67.54424205218055
+      ],
+      [
+        4000.0,
+        94.66665862817243
+      ],
+      [
+        5000.0,
+        115.19173063162575
+      ],
+      [
+        5800.0,
+        127.5486617357456
+      ],
+      [
+        6350.0,
+        126.34438455186951
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        550
+      ],
+      [
+        0.2,
+        1400
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        820
+      ],
+      [
+        0.2,
+        2100
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        550
+      ],
+      [
+        0.2,
+        1400
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        820
+      ],
+      [
+        0.2,
+        2100
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1300
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1950
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1300
+      ]
+    ]
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1950
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1500,
+        30
+      ],
+      [
+        3000,
+        39
+      ],
+      [
+        4500,
+        36
+      ],
+      [
+        5500,
+        32
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1500.0,
+        4.71238898038469
+      ],
+      [
+        3000.0,
+        12.252211349000193
+      ],
+      [
+        4500.0,
+        16.964600329384883
+      ],
+      [
+        5500.0,
+        18.430676901060117
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        200
+      ],
+      [
+        0.2,
+        500
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        300
+      ],
+      [
+        0.2,
+        750
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        200
+      ],
+      [
+        0.2,
+        500
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        300
+      ],
+      [
+        0.2,
+        750
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        180
+      ],
+      [
+        0.2,
+        450
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        270
+      ],
+      [
+        0.2,
+        680
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        180
+      ],
+      [
+        0.2,
+        450
+      ]
+    ]
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        270
+      ],
+      [
+        0.2,
+        680
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1000,
+        300
+      ],
+      [
+        2500,
+        400
+      ],
+      [
+        3500,
+        420
+      ],
+      [
+        4500,
+        380
+      ],
+      [
+        5500,
+        340
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1000.0,
+        31.41592653589793
+      ],
+      [
+        2500.0,
+        104.71975511965977
+      ],
+      [
+        3500.0,
+        153.93804002589985
+      ],
+      [
+        4500.0,
+        179.07078125461823
+      ],
+      [
+        5500.0,
+        195.8259420737638
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        600
+      ],
+      [
+        0.2,
+        1500
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        900
+      ],
+      [
+        0.2,
+        2300
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        600
+      ],
+      [
+        0.2,
+        1500
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        900
+      ],
+      [
+        0.2,
+        2300
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1250
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1900
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1250
+      ]
+    ]
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1900
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1000,
+        200
+      ],
+      [
+        2500,
+        380
+      ],
+      [
+        4000,
+        350
+      ],
+      [
+        5500,
+        300
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1000.0,
+        20.94395102393195
+      ],
+      [
+        2500.0,
+        99.48376736367679
+      ],
+      [
+        4000.0,
+        146.60765716752366
+      ],
+      [
+        5500.0,
+        172.78759594743866
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        700
+      ],
+      [
+        0.2,
+        1800
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1050
+      ],
+      [
+        0.2,
+        2700
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        700
+      ],
+      [
+        0.2,
+        1800
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1050
+      ],
+      [
+        0.2,
+        2700
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        800
+      ],
+      [
+        0.2,
+        2000
+      ]
+    ]
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        1200
+      ],
+      [
+        0.2,
+        3000
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "engine_torque",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "Nm",
+    "points": [
+      [
+        1000,
+        120
+      ],
+      [
+        3000,
+        200
+      ],
+      [
+        5000,
+        180
+      ],
+      [
+        6500,
+        160
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "engine_power",
+    "corner": null,
+    "x_unit": "rpm",
+    "y_unit": "kW",
+    "points": [
+      [
+        1000.0,
+        12.566370614359174
+      ],
+      [
+        3000.0,
+        62.83185307179586
+      ],
+      [
+        5000.0,
+        94.2477796076938
+      ],
+      [
+        6500.0,
+        108.90854532444617
+      ]
+    ],
+    "derived": true
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_bump",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        600
+      ],
+      [
+        0.2,
+        1500
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_rebound",
+    "corner": "FL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        900
+      ],
+      [
+        0.2,
+        2300
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_bump",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        600
+      ],
+      [
+        0.2,
+        1500
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_rebound",
+    "corner": "FR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        900
+      ],
+      [
+        0.2,
+        2300
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_bump",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1300
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_rebound",
+    "corner": "RL",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1900
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_bump",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        500
+      ],
+      [
+        0.2,
+        1300
+      ]
+    ]
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "kind": "damper_rebound",
+    "corner": "RR",
+    "x_unit": "m/s",
+    "y_unit": "N",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0.05,
+        750
+      ],
+      [
+        0.2,
+        1900
+      ]
+    ]
+  }
+]

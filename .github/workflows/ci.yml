@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Lint with flake8
+        run: flake8 svj_analyze.py
+
+      - name: Smoke test — scan bundled example zip
+        run: |
+          python svj_analyze.py examples/test_library_multilevel.zip --out /tmp/svj_report
+          test -f /tmp/svj_report/index.json
+          test -f /tmp/svj_report/tires.json
+          test -f /tmp/svj_report/curves.json
+          test -f /tmp/svj_report/fingerprint.json
+          test -f /tmp/svj_report/heatmap.json
+          test -f /tmp/svj_report/library.xlsx
+          echo "All expected output files present."
+
+      - name: Smoke test — check subcommand
+        run: |
+          python svj_analyze.py check examples/test_library_multilevel.zip

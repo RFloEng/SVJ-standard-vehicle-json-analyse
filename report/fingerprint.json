@@ -1,0 +1,93 @@
+[
+  {
+    "car": "Alfa Romeo 75 (Tipo 162) (1988)",
+    "source": "test_library_multilevel.zip!/alfa/alfa_75.svj.json",
+    "mass": 0.7323,
+    "balance": 0.6543,
+    "cog": 0.75,
+    "contact": 0.3415,
+    "spring_f": 0.3836,
+    "spring_r": 0.4515,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 0.5835
+  },
+  {
+    "car": "BMW 325i (E30) (1987)",
+    "source": "test_library_multilevel.zip!/deep/sub/bmw_e30.svj.json",
+    "mass": 0.6708,
+    "balance": 0.6529,
+    "cog": 0.6842,
+    "contact": 0.3415,
+    "spring_f": 0.4749,
+    "spring_r": 0.5359,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 0.7365
+  },
+  {
+    "car": "Citroën 2CV6 (1979)",
+    "source": "test_library_multilevel.zip!/citroen_2cv.svj.json",
+    "mass": 1.0,
+    "balance": 0.4552,
+    "cog": 0.5526,
+    "contact": 0.0,
+    "spring_f": 0.0,
+    "spring_r": 0.0,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 0.0
+  },
+  {
+    "car": "Chevrolet Corvette C3 (1972)",
+    "source": "test_library_multilevel.zip!/american/corvette.svj.json",
+    "mass": 0.5055,
+    "balance": 0.6534,
+    "cog": 0.8158,
+    "contact": 0.5854,
+    "spring_f": 0.5662,
+    "spring_r": 0.3249,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 1.0
+  },
+  {
+    "car": "Example 4WD Pickup (2024)",
+    "source": "test_library_multilevel.zip!/skeletons/4wd_pickup.svj.json",
+    "mass": 0.0,
+    "balance": 0.8951,
+    "cog": 0.0,
+    "contact": 0.8293,
+    "spring_f": 0.8402,
+    "spring_r": 1.0,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 0.3841
+  },
+  {
+    "car": "Example AWD EV Sedan (2024)",
+    "source": "test_library_multilevel.zip!/skeletons/nested/ev_sedan.svj.json",
+    "mass": 0.1361,
+    "balance": 1.0,
+    "cog": 1.0,
+    "contact": 1.0,
+    "spring_f": 1.0,
+    "spring_r": 1.0,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": null
+  },
+  {
+    "car": "Example FF Hatchback (2024)",
+    "source": "test_library_multilevel.zip!/ff_hatch.svj.json",
+    "mass": 0.6222,
+    "balance": 0.0,
+    "cog": 0.6842,
+    "contact": 0.5244,
+    "spring_f": 0.6119,
+    "spring_r": 0.4515,
+    "damper": null,
+    "torque": null,
+    "pw_ratio": 0.4932
+  }
+]

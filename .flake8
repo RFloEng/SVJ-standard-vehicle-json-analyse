@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 100
+# E221 – multiple spaces before operator
+# Intentional column-alignment in dict literals and variable assignment blocks
+# is a deliberate style choice in this project; suppressing globally.
+extend-ignore = E221

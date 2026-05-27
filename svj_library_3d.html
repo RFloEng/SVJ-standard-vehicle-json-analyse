@@ -1,0 +1,1037 @@
+<!doctype html>
+<!--
+   Copyright 2026 RFloEng
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SVJ Library 3D Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg:      #08090c;
+    --s1:      #0f1117;
+    --s2:      #161a24;
+    --s3:      #1c2130;
+    --brd:     #252b3a;
+    --brdL:    #333b50;
+    --tx:      #dfe3ed;
+    --txD:     #6e7a96;
+    --txM:     #404c66;
+    --ac:      #ff5131;
+    --acD:     rgba(255,81,49,.18);
+    --bl:      #4d9fff;
+    --gn:      #34d27b;
+    --yl:      #f0b429;
+    --pr:      #b06aff;
+    --cy:      #2dd4bf;
+    --rd:      #f0524f;
+    --og:      #ff8c42;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    background: var(--bg); color: var(--tx); font-size: 12px;
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────────── */
+  header {
+    height: 42px; min-height: 42px;
+    background: var(--s1); border-bottom: 1px solid var(--brd);
+    display: flex; align-items: center; gap: 12px; padding: 0 14px;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 14px; font-weight: 600; color: var(--tx); letter-spacing: 0.5px; white-space: nowrap; }
+  header h1 span { color: var(--ac); }
+  .hdr-sep  { width: 1px; height: 20px; background: var(--brd); }
+  .hdr-sub  { color: var(--txD); font-size: 10px; }
+  .hdr-space { flex: 1; }
+  .hdr-stats { display: flex; gap: 14px; font-size: 10px; color: var(--txD); }
+  .hdr-stats b { color: var(--ac); }
+
+  label.load-btn, button.load-btn {
+    background: var(--s2); color: var(--txD); border: 1px solid var(--brd);
+    border-radius: 3px; padding: 3px 10px; font-size: 11px; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+  }
+  label.load-btn:hover, button.load-btn:hover { border-color: var(--ac); color: var(--tx); }
+  label.load-btn input { display: none; }
+
+  /* ── Body layout ─────────────────────────────────────── */
+  .body-wrap {
+    flex: 1; display: flex; overflow: hidden;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────── */
+  aside {
+    width: 230px; min-width: 230px; background: var(--s1);
+    border-right: 1px solid var(--brd);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-section {
+    border-bottom: 1px solid var(--brd); padding: 10px;
+  }
+  .sidebar-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--txM); margin-bottom: 7px; font-weight: 600;
+  }
+
+  /* Car list */
+  #car-list { flex: 1; overflow-y: auto; }
+  .car-item {
+    padding: 7px 10px; cursor: pointer; border-bottom: 1px solid var(--brd);
+    transition: background 0.1s;
+  }
+  .car-item:hover { background: var(--s2); }
+  .car-item.active { background: var(--acD); border-left: 2px solid var(--ac); padding-left: 8px; }
+  .car-name { font-size: 11px; color: var(--tx); }
+  .car-meta { font-size: 9px; color: var(--txD); margin-top: 2px; }
+  .empty-list { color: var(--txM); font-size: 11px; padding: 16px 10px; text-align: center; line-height: 1.6; }
+
+  /* Layer toggles */
+  .layer-row {
+    display: flex; align-items: center; gap: 7px; padding: 4px 0;
+    cursor: pointer; user-select: none;
+  }
+  .layer-row span { font-size: 10px; color: var(--txD); }
+  .layer-row:hover span { color: var(--tx); }
+  .layer-dot {
+    width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0;
+    border: 1px solid transparent;
+  }
+  .layer-row.off .layer-dot { opacity: 0.2; }
+  .layer-row.off span { color: var(--txM); }
+
+  /* Corner buttons */
+  .corner-row { display: flex; gap: 5px; flex-wrap: wrap; }
+  .cbtn {
+    padding: 3px 9px; border-radius: 3px; background: var(--s2);
+    border: 1px solid var(--brd); color: var(--txD); font-size: 10px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .cbtn:hover { border-color: var(--brdL); color: var(--tx); }
+  .cbtn.active { background: var(--acD); border-color: var(--ac); color: var(--tx); }
+
+  /* View preset buttons */
+  .view-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .vbtn {
+    padding: 2px 7px; border-radius: 2px; background: var(--s3);
+    border: 1px solid var(--brd); color: var(--txD); font-size: 9px;
+    cursor: pointer; font-family: inherit; letter-spacing: 0.3px;
+  }
+  .vbtn:hover { border-color: var(--ac); color: var(--ac); }
+
+  /* ── Viewport area ───────────────────────────────────── */
+  .viewport-wrap {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  }
+  #viewport {
+    flex: 1; position: relative; background: var(--bg); overflow: hidden;
+  }
+  #viewport canvas { display: block; width: 100% !important; height: 100% !important; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; background: rgba(8,9,12,0.95);
+    border: 1px solid var(--brd); border-radius: 3px;
+    padding: 6px 9px; font-size: 10px; color: var(--tx);
+    pointer-events: none; display: none; z-index: 999;
+    white-space: pre; max-width: 280px; line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+
+  /* Empty viewport message */
+  #viewport-msg {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; color: var(--txM);
+    font-size: 12px; gap: 8px; pointer-events: none;
+  }
+  #viewport-msg .big { font-size: 28px; }
+  #viewport-msg p { color: var(--txD); font-size: 10px; text-align: center; line-height: 1.7; }
+
+  /* ── Info bar (bottom) ───────────────────────────────── */
+  #info-bar {
+    height: 36px; min-height: 36px; background: var(--s1);
+    border-top: 1px solid var(--brd); display: flex; align-items: center;
+    gap: 18px; padding: 0 14px; flex-shrink: 0; overflow: hidden;
+  }
+  .info-item { display: flex; gap: 5px; align-items: baseline; font-size: 10px; white-space: nowrap; }
+  .info-label { color: var(--txM); }
+  .info-val   { color: var(--tx); font-weight: 600; }
+  .info-unit  { color: var(--txD); font-size: 9px; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--brd); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brdL); }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <h1>SVJ Library <span>3D</span></h1>
+  <div class="hdr-sep"></div>
+  <span class="hdr-sub">suspension · hardpoints · geometry</span>
+  <div class="hdr-space"></div>
+  <div class="hdr-stats">
+    <div>loaded <b id="s-count">0</b></div>
+  </div>
+  <label class="load-btn" title="Pick individual .svj.json files or a .zip archive">
+    📂 Pick files / zip
+    <input type="file" id="file-input" multiple accept=".json,.svj.json,.zip">
+  </label>
+  <label class="load-btn" title="Pick a folder (recursive)">
+    📁 Pick folder
+    <input type="file" id="folder-input" multiple webkitdirectory directory>
+  </label>
+</header>
+
+<div class="body-wrap">
+
+  <!-- ── Sidebar ── -->
+  <aside>
+    <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0;">
+      <div style="padding:10px 10px 6px;border-bottom:1px solid var(--brd);">
+        <div class="sidebar-label" style="margin-bottom:0;">Library</div>
+      </div>
+      <div id="car-list">
+        <div class="empty-list">Drop or pick a folder of<br>.svj.json files to begin.</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Layers</div>
+      <div id="layer-list"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Highlight corner</div>
+      <div class="corner-row" id="corner-btns"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Camera view</div>
+      <div class="view-row">
+        <button class="vbtn" onclick="setView('iso')">iso</button>
+        <button class="vbtn" onclick="setView('front')">front</button>
+        <button class="vbtn" onclick="setView('rear')">rear</button>
+        <button class="vbtn" onclick="setView('left')">left</button>
+        <button class="vbtn" onclick="setView('right')">right</button>
+        <button class="vbtn" onclick="setView('top')">top</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Viewport ── -->
+  <div class="viewport-wrap">
+    <div id="viewport">
+      <div id="viewport-msg">
+        <div class="big">⬡</div>
+        <p>Select a vehicle from the library sidebar<br>to render its suspension geometry in 3D.</p>
+      </div>
+    </div>
+    <div id="info-bar">
+      <div class="info-item"><span class="info-label">—</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<!-- ── Import map for Three.js r128 module ── -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ═══════════════════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════════════════
+const library = [];           // [{name, source, doc}]
+let   DATA    = null;         // currently viewed SVJ doc
+let   scene, camera, renderer, groups, pickables;
+let   spherical, target;
+let   highlightCorner = null;
+
+const layers = {
+  grid:        true,
+  axes:        false,
+  chassis:     true,
+  suspension:  true,
+  springs:     true,
+  steering:    true,
+  drivetrain:  true,
+  massBodies:  true,
+  wheels:      true,
+  brakeDiscs:  true,
+};
+const layerDefs = [
+  {key:'grid',       label:'Grid',        color:'#252b3a'},
+  {key:'axes',       label:'Axes (SAE)',   color:'#6e7a96'},
+  {key:'chassis',    label:'Chassis / CG', color:'#ff5131'},
+  {key:'suspension', label:'Suspension',   color:'#4d9fff'},
+  {key:'springs',    label:'Springs / Dampers', color:'#34d27b'},
+  {key:'steering',   label:'Steering',    color:'#2dd4bf'},
+  {key:'drivetrain', label:'Drivetrain',  color:'#ff8c42'},
+  {key:'massBodies', label:'Mass bodies', color:'#b06aff'},
+  {key:'wheels',     label:'Wheels / Tires', color:'#6e7a96'},
+  {key:'brakeDiscs', label:'Brake discs', color:'#f0524f'},
+];
+const cornerDefs = [
+  {key:null,  label:'All',  color:'#6e7a96'},
+  {key:'FL',  label:'FL',   color:'#4d9fff'},
+  {key:'FR',  label:'FR',   color:'#34d27b'},
+  {key:'RL',  label:'RL',   color:'#f0b429'},
+  {key:'RR',  label:'RR',   color:'#b06aff'},
+];
+
+// ═══════════════════════════════════════════════════════════
+//  Coordinate conversion  SAE J670 → Three.js
+//  SAE: X fwd, Y right, Z down  →  Three: X=p[1], Y=-p[2], Z=-p[0]
+// ═══════════════════════════════════════════════════════════
+const sae2three = p => {
+  if (!p || p.length < 3) return new THREE.Vector3();
+  return new THREE.Vector3(p[1], -p[2], -p[0]);
+};
+
+// ═══════════════════════════════════════════════════════════
+//  Tire dimension resolver
+// ═══════════════════════════════════════════════════════════
+function resolveTireDims(corn, data) {
+  const w = corn.wheel || {};
+  let secW   = w.tire_section_width;
+  let aspect = w.tire_aspect_ratio;
+  const setRef = corn.tire?.set_ref || w.set_ref;
+  if (setRef && data.tires?.sets?.[setRef]) {
+    const dims = data.tires.sets[setRef].dimensions || {};
+    if (dims.section_width)  secW   = dims.section_width;
+    if (dims.aspect_ratio)   aspect = dims.aspect_ratio;
+  }
+  if (!secW)   secW   = w.rim_width    ? w.rim_width * 1.2  : 0.205;
+  if (!aspect) aspect = w.loaded_radius && w.rim_diameter
+    ? (w.loaded_radius - w.rim_diameter / 2) / secW
+    : 0.50;
+  return { secW, aspect };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  3D Scene
+// ═══════════════════════════════════════════════════════════
+function buildScene(doc) {
+  DATA = doc;
+  const vp = document.getElementById('viewport');
+  const msg = document.getElementById('viewport-msg');
+  msg.style.display = 'none';
+
+  // Clean up old renderer
+  const old = vp.querySelector('canvas');
+  if (old) old.remove();
+
+  const W = vp.clientWidth  || 800;
+  const H = vp.clientHeight || 600;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color('#08090c');
+
+  camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100);
+  camera.position.set(2.5, 1.8, 3.5);
+  camera.lookAt(0, 0.25, 1.15);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  vp.insertBefore(renderer.domElement, vp.firstChild);
+
+  scene.add(new THREE.AmbientLight(0x8899bb, 0.6));
+  const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(3,5,4); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0x6688cc, 0.3); d2.position.set(-2,3,-3); scene.add(d2);
+
+  groups = {};
+  Object.keys(layers).forEach(k => {
+    groups[k] = new THREE.Group();
+    scene.add(groups[k]);
+  });
+  pickables = [];
+
+  // ── Helpers ─────────────────────────────────────────────
+  const addP = (m, label, corner=null) => {
+    m.userData = { label, corner }; pickables.push(m);
+  };
+  const mkS = (pos, r, color) => {
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(r, 12, 12),
+      new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25 })
+    );
+    m.position.copy(pos); return m;
+  };
+  const mkT = (p1, p2, r, color) => {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const len = dir.length();
+    if (len < 0.001) return null;
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r, len, 8),
+      new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.85 })
+    );
+    m.position.lerpVectors(p1, p2, 0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+    return m;
+  };
+  const mkL = (p1, p2, color) => new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([p1, p2]),
+    new THREE.LineBasicMaterial({ color })
+  );
+  const mkCoil = (p1, p2, coilR, wireR, turns, color) => {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const len = dir.length();
+    if (len < 0.001) return null;
+    const segs = turns * 24;
+    const pts = [];
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      const angle = t * turns * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(angle)*coilR, t*len, Math.sin(angle)*coilR));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo   = new THREE.TubeGeometry(curve, segs*2, wireR, 6, false);
+    const mat   = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.15, shininess: 40 });
+    const mesh  = new THREE.Mesh(geo, mat);
+    mesh.position.copy(p1);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+    return mesh;
+  };
+  const mkDamper = (p1, p2, bodyR, rodR, color) => {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const len = dir.length();
+    if (len < 0.001) return null;
+    const grp   = new THREE.Group();
+    const dirN  = dir.clone().normalize();
+    const bodyLen = len * 0.55, rodLen = len * 0.45;
+    const bodyMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(bodyR, bodyR, bodyLen, 10),
+      new THREE.MeshPhongMaterial({ color, transparent: true, opacity: 0.8, shininess: 60 })
+    );
+    bodyMesh.position.set(0, bodyLen/2, 0); grp.add(bodyMesh);
+    const rodMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(rodR, rodR, rodLen, 8),
+      new THREE.MeshPhongMaterial({ color: 0xcccccc, transparent: true, opacity: 0.85, shininess: 100, specular: 0xffffff })
+    );
+    rodMesh.position.set(0, bodyLen + rodLen/2, 0); grp.add(rodMesh);
+    const capMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(bodyR*1.05, bodyR*1.05, bodyR*0.3, 10),
+      new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 30 })
+    );
+    capMesh.position.set(0, bodyLen, 0); grp.add(capMesh);
+    grp.position.copy(p2);
+    grp.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),
+      new THREE.Vector3().subVectors(p1, p2).normalize());
+    return grp;
+  };
+  const mkBox = (c, sx, sy, sz, color) => {
+    const m = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(sx, sy, sz)),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.4 })
+    );
+    m.position.copy(c); return m;
+  };
+
+  // ── Data ──────────────────────────────────────────────
+  const ch  = doc.chassis    || {};
+  const wb  = ch.wheelbase   || 2.31;
+  const tf  = ch.track_front || 1.5;
+  const tr  = ch.track_rear  || 1.5;
+
+  // Grid
+  const grid = new THREE.GridHelper(6, 30, 0x1a2235, 0x111825);
+  grid.position.set(0, 0, 1.15); groups.grid.add(grid);
+
+  // Axes (SAE)
+  const ao = sae2three([0,0,0]);
+  [[0.4,0,0,0xff3333],[0,0.4,0,0x33ff33],[0,0,0.4,0x3377ff]].forEach(([x,y,z,c]) => {
+    const t = mkT(ao, sae2three([x,y,z]), 0.004, c); if (t) groups.axes.add(t);
+  });
+
+  // CG
+  const cg   = ch.center_of_gravity || [wb/2, 0, -0.4];
+  const cgP  = sae2three(cg);
+  const cgS  = mkS(cgP, 0.035, 0xff5131);
+  addP(cgS, `CG: [${(ch.center_of_gravity||[]).map(v=>v.toFixed(3)).join(', ')}]`);
+  groups.chassis.add(cgS);
+  groups.chassis.add(mkBox(sae2three([-wb/2, 0, -0.35]),
+    Math.max(tf, tr)+0.1, 0.45, wb+0.5, 0x2a3550));
+
+  // Mass bodies
+  const catC = { structural:0x4d9fff, powertrain:0xff8c42, fluid:0x2dd4bf,
+                 payload:0xf0b429, electrical:0xb06aff };
+  (ch.mass_bodies || []).forEach(mb => {
+    const p = sae2three(mb.position);
+    const r = Math.max(0.015, Math.min(0.06, Math.cbrt(mb.mass/400)*0.04));
+    const s = mkS(p, r, catC[mb.category] || 0x6e7a96);
+    addP(s, `${mb.id}: ${mb.mass} kg\n[${mb.position.map(v=>v.toFixed(3)).join(', ')}]`);
+    groups.massBodies.add(s);
+  });
+
+  // Suspension per corner
+  const cC = { FL:0x4d9fff, FR:0x34d27b, RL:0xf0b429, RR:0xb06aff };
+  ['FL','FR','RL','RR'].forEach(cn => {
+    const corn = doc.suspension?.[cn]; if (!corn?.topology) return;
+    const col  = cC[cn];
+    const hp   = corn.topology.upright?.hardpoints || {};
+    const links = corn.topology.links || [];
+
+    Object.entries(hp).forEach(([name, coord]) => {
+      const p3 = sae2three(coord);
+      const s  = mkS(p3, name==='wheel_center' ? 0.018 : 0.011, col);
+      addP(s, `${cn}.${name}\n[${coord.map(v=>v.toFixed(3)).join(', ')}]`, cn);
+      groups.suspension.add(s);
+    });
+    links.forEach(link => {
+      const ref = link.outboard_ref?.replace('hardpoints.','');
+      const oc  = hp[ref]; if (!oc) return; const op = sae2three(oc);
+      (link.inboard_points || []).forEach(ip => {
+        const inp = sae2three(ip);
+        const ib  = mkS(inp, 0.009, col);
+        addP(ib, `${cn}.${link.name} inboard\n[${ip.map(v=>v.toFixed(3)).join(', ')}]`, cn);
+        groups.suspension.add(ib);
+        const tube = mkT(inp, op, 0.005, col);
+        if (tube) { tube.userData = { corner: cn }; groups.suspension.add(tube); }
+      });
+    });
+
+    // Spring
+    const sp = corn.spring;
+    if (sp?.inboard_mount && sp?.outboard_mount) {
+      const si = sae2three(sp.inboard_mount), so = sae2three(sp.outboard_mount);
+      const coil = mkCoil(si, so, 0.018, 0.004, 7, 0x34d27b);
+      if (coil) {
+        coil.userData = { corner: cn, label: `${cn} spring\nrate: ${sp.rate||'?'} N/m\ntype: ${sp.type||'?'}` };
+        pickables.push(coil); groups.springs.add(coil);
+      }
+      const s1 = mkS(si, 0.009, 0x34d27b); addP(s1, `${cn}.spring top [${sp.inboard_mount.map(v=>v.toFixed(3)).join(', ')}]`, cn); groups.springs.add(s1);
+      const s2 = mkS(so, 0.009, 0x34d27b); addP(s2, `${cn}.spring btm [${sp.outboard_mount.map(v=>v.toFixed(3)).join(', ')}]`, cn); groups.springs.add(s2);
+    }
+
+    // Damper
+    const dm = corn.damper;
+    if (dm?.inboard_mount && dm?.outboard_mount) {
+      const di = sae2three(dm.inboard_mount), dout = sae2three(dm.outboard_mount);
+      const damper = mkDamper(di, dout, 0.012, 0.005, 0xff8c42);
+      if (damper) {
+        damper.userData = { corner: cn, label: `${cn} damper\ntype: ${dm.type||'?'}` };
+        groups.springs.add(damper);
+      }
+      const d1 = mkS(di,   0.007, 0xff8c42); addP(d1, `${cn}.damper top`, cn); groups.springs.add(d1);
+      const d2 = mkS(dout, 0.007, 0xff8c42); addP(d2, `${cn}.damper btm`, cn); groups.springs.add(d2);
+    }
+
+    // Wheel + tire
+    const wc = hp.wheel_center;
+    if (wc) {
+      const wcP = sae2three(wc);
+      const w   = corn.wheel || {};
+      const rimDia  = w.rim_diameter || 0.4318;
+      const rimW    = w.rim_width    || 0.1778;
+      const td      = resolveTireDims(corn, doc);
+      const secW    = td.secW;
+      const aspect  = td.aspect;
+      const sidewall = secW * aspect;
+      const tireDia  = rimDia + 2 * sidewall;
+      const tireR    = tireDia / 2;
+      const rimR     = rimDia / 2;
+      const isLeft   = wc[1] < 0;
+
+      // Tire
+      const tireMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(tireR, tireR, secW, 32, 1, false),
+        new THREE.MeshPhongMaterial({ color: 0x1a1a1a, transparent: true, opacity: 0.55, shininess: 5 })
+      );
+      tireMesh.position.copy(wcP); tireMesh.rotation.z = Math.PI/2;
+      tireMesh.userData = { label: `${cn} tire: ${(secW*1000).toFixed(0)}/${(aspect*100).toFixed(0)}R${Math.round(rimDia/0.0254)}\nOD: ${(tireDia*1000).toFixed(0)}mm  W: ${(secW*1000).toFixed(0)}mm`, corner: cn };
+      pickables.push(tireMesh); groups.wheels.add(tireMesh);
+
+      // Sidewall rings
+      const swGeo = new THREE.TorusGeometry(tireR - 0.003, 0.003, 8, 32);
+      const swMat = new THREE.MeshPhongMaterial({ color: 0x222222, transparent: true, opacity: 0.5 });
+      [-1, 1].forEach(side => {
+        const sw = new THREE.Mesh(swGeo, swMat);
+        sw.position.copy(wcP); sw.position.x += side * secW/2;
+        sw.rotation.y = Math.PI/2; groups.wheels.add(sw);
+      });
+
+      // Rim
+      const rimMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(rimR, rimR, rimW, 32, 1, false),
+        new THREE.MeshPhongMaterial({ color: 0x888899, transparent: true, opacity: 0.4, shininess: 80, specular: 0xaaaacc })
+      );
+      rimMesh.position.copy(wcP); rimMesh.rotation.z = Math.PI/2;
+      rimMesh.userData = { label: `${cn} rim: ${Math.round(rimDia/0.0254)}" x ${(rimW/0.0254).toFixed(1)}"\nDia: ${(rimDia*1000).toFixed(0)}mm  W: ${(rimW*1000).toFixed(0)}mm`, corner: cn };
+      pickables.push(rimMesh); groups.wheels.add(rimMesh);
+
+      // Rim face disc
+      const discGeo = new THREE.CircleGeometry(rimR * 0.85, 32);
+      const discMat = new THREE.MeshPhongMaterial({ color: col, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+      [-1, 1].forEach(side => {
+        const disc = new THREE.Mesh(discGeo, discMat);
+        disc.position.copy(wcP); disc.position.x += side * rimW/2;
+        disc.rotation.y = Math.PI/2; groups.wheels.add(disc);
+      });
+
+      // Rim lip
+      const lipGeo = new THREE.TorusGeometry(rimR, 0.005, 8, 32);
+      const lipMat = new THREE.MeshPhongMaterial({ color: 0xaaaabb, transparent: true, opacity: 0.5, shininess: 100 });
+      [-1, 1].forEach(side => {
+        const lip = new THREE.Mesh(lipGeo, lipMat);
+        lip.position.copy(wcP); lip.position.x += side * rimW/2;
+        lip.rotation.y = Math.PI/2; groups.wheels.add(lip);
+      });
+
+      // Brake disc
+      const brkDisc = corn.brake?.disc;
+      if (brkDisc?.outer_diameter) {
+        const brkR   = brkDisc.outer_diameter / 2;
+        const brkThk = brkDisc.thickness || 0.022;
+        const brkMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(brkR, brkR, brkThk, 24, 1, false),
+          new THREE.MeshPhongMaterial({ color: 0x666677, transparent: true, opacity: 0.35, shininess: 60 })
+        );
+        brkMesh.position.copy(wcP);
+        brkMesh.position.x += isLeft ? 0.03 : -0.03;
+        brkMesh.rotation.z = Math.PI/2;
+        brkMesh.userData = { label: `${cn} brake disc: ${brkDisc.type||'?'}\nOD: ${(brkDisc.outer_diameter*1000).toFixed(0)}mm  Thk: ${(brkThk*1000).toFixed(1)}mm`, corner: cn };
+        pickables.push(brkMesh); groups.brakeDiscs.add(brkMesh);
+      }
+    }
+  });
+
+  // Steering
+  const st = doc.steering;
+  if (st?.rack_position) {
+    const rP = sae2three(st.rack_position);
+    const rL = sae2three([st.rack_position[0], -tf/2*0.3, st.rack_position[2]]);
+    const rR = sae2three([st.rack_position[0],  tf/2*0.3, st.rack_position[2]]);
+    const rt = mkT(rL, rR, 0.007, 0x2dd4bf); if (rt) groups.steering.add(rt);
+    const rs = mkS(rP, 0.01, 0x2dd4bf); addP(rs, `Rack: [${st.rack_position.map(v=>v.toFixed(3)).join(', ')}]`); groups.steering.add(rs);
+    if (st.tie_rod_inboard) ['left','right'].forEach(side => {
+      const c = st.tie_rod_inboard[side]; if (!c) return;
+      const s = mkS(sae2three(c), 0.007, 0x2dd4bf);
+      addP(s, `Tie rod ${side}\n[${c.map(v=>v.toFixed(3)).join(', ')}]`);
+      groups.steering.add(s);
+    });
+  }
+
+  // Drivetrain
+  const pt = doc.powertrain;
+  if (pt) {
+    const dc = 0xff8c42;
+    [['engine', pt.engine, 0.05],['clutch', pt.clutch, 0.025],['gearbox', pt.gearbox, 0.03]].forEach(([n,c,r]) => {
+      if (!c?.position) return;
+      const p = sae2three(c.position);
+      groups.drivetrain.add(mkBox(p, r*2, r*1.5, r*2, dc));
+      const s = mkS(p, 0.012, dc);
+      addP(s, `${n}: ${c.mass||'?'} kg\n[${c.position.map(v=>v.toFixed(3)).join(', ')}]`);
+      groups.drivetrain.add(s);
+    });
+    (pt.driveshafts || []).forEach(ds => {
+      const fj = ds.joint_front?.position, rj = ds.joint_rear?.position;
+      if (fj && rj) {
+        const t = mkT(sae2three(fj), sae2three(rj), 0.006, dc); if (t) groups.drivetrain.add(t);
+      }
+    });
+    (pt.differentials || []).forEach(df => {
+      if (!df.position) return;
+      const p = sae2three(df.position);
+      groups.drivetrain.add(mkBox(p, 0.08, 0.05, 0.05, 0xf0524f));
+      const s = mkS(p, 0.014, 0xf0524f);
+      addP(s, `${df.id||'diff'} (${df.type||'?'})\nFD=${df.final_drive||'?'}`);
+      groups.drivetrain.add(s);
+    });
+  }
+
+  // Camera orbit
+  target    = new THREE.Vector3(0, 0.25, 1.15);
+  spherical = new THREE.Spherical().setFromVector3(
+    new THREE.Vector3().subVectors(camera.position, target));
+
+  applyLayers();
+  applyCornerHighlight();
+  setupControls();
+  animate();
+  updateInfoBar(doc);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Camera helpers
+// ═══════════════════════════════════════════════════════════
+function updateCamera() {
+  camera.position.copy(target).add(new THREE.Vector3().setFromSpherical(spherical));
+  camera.lookAt(target);
+}
+
+const VIEWS = {
+  iso:   { r: 4.5, phi: Math.PI/3.5, theta: Math.PI/6 },
+  front: { r: 3.5, phi: Math.PI/2,   theta: Math.PI   },
+  rear:  { r: 3.5, phi: Math.PI/2,   theta: 0         },
+  left:  { r: 3.5, phi: Math.PI/2,   theta: -Math.PI/2 },
+  right: { r: 3.5, phi: Math.PI/2,   theta: Math.PI/2  },
+  top:   { r: 5,   phi: 0.15,        theta: 0          },
+};
+window.setView = function(name) {
+  if (!spherical) return;
+  const v = VIEWS[name]; if (!v) return;
+  spherical.set(v.r, v.phi, v.theta);
+  target.set(0, 0.25, 1.15);
+  updateCamera();
+};
+
+// ═══════════════════════════════════════════════════════════
+//  Orbit controls
+// ═══════════════════════════════════════════════════════════
+function setupControls() {
+  const cv = renderer.domElement;
+  // Remove old listeners by cloning
+  const newCv = cv.cloneNode(true);
+  cv.parentNode.replaceChild(newCv, cv);
+  const el = renderer.domElement;
+
+  let isDrag = false, isPan = false, prevX = 0, prevY = 0;
+
+  el.addEventListener('mousedown', e => {
+    if (e.button === 0) isDrag = true;
+    if (e.button === 2) isPan  = true;
+    prevX = e.clientX; prevY = e.clientY; e.preventDefault();
+  });
+  el.addEventListener('mousemove', e => {
+    const dx = e.clientX - prevX, dy = e.clientY - prevY;
+    prevX = e.clientX; prevY = e.clientY;
+    if (isDrag) {
+      spherical.theta -= dx * 0.005;
+      spherical.phi   -= dy * 0.005;
+      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+      updateCamera();
+    }
+    if (isPan) {
+      const ps = 0.002 * spherical.radius;
+      const r  = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const u  = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      target.add(r.multiplyScalar(-dx * ps));
+      target.add(u.multiplyScalar( dy * ps));
+      updateCamera();
+    }
+    // Tooltip raycast
+    const rect  = el.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width)  * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    const rc = new THREE.Raycaster();
+    rc.setFromCamera(mouse, camera);
+    const hits = rc.intersectObjects(pickables, false);
+    const tip  = document.getElementById('tooltip');
+    if (hits.length > 0) {
+      tip.textContent  = hits[0].object.userData.label;
+      tip.style.display = 'block';
+      tip.style.left   = (e.clientX + 14) + 'px';
+      tip.style.top    = (e.clientY - 10) + 'px';
+    } else {
+      tip.style.display = 'none';
+    }
+  });
+  el.addEventListener('mouseup',    () => { isDrag = false; isPan = false; });
+  el.addEventListener('mouseleave', () => {
+    isDrag = false; isPan = false;
+    document.getElementById('tooltip').style.display = 'none';
+  });
+  el.addEventListener('wheel', e => {
+    spherical.radius *= 1 + e.deltaY * 0.001;
+    spherical.radius = Math.max(0.5, Math.min(15, spherical.radius));
+    updateCamera(); e.preventDefault();
+  }, { passive: false });
+  el.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Touch
+  let touchDist = 0;
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) { isDrag = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; }
+    if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      touchDist = Math.sqrt(dx*dx + dy*dy);
+    }
+  }, { passive: false });
+  el.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches.length === 1 && isDrag) {
+      const dx = e.touches[0].clientX - prevX, dy = e.touches[0].clientY - prevY;
+      prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+      spherical.theta -= dx * 0.005; spherical.phi -= dy * 0.005;
+      spherical.phi = Math.max(0.1, Math.min(Math.PI-0.1, spherical.phi));
+      updateCamera();
+    }
+    if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      const nd = Math.sqrt(dx*dx + dy*dy);
+      spherical.radius *= touchDist / nd;
+      spherical.radius = Math.max(0.5, Math.min(15, spherical.radius));
+      touchDist = nd; updateCamera();
+    }
+  }, { passive: false });
+  el.addEventListener('touchend', () => { isDrag = false; });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Layer & corner visibility
+// ═══════════════════════════════════════════════════════════
+function applyLayers() {
+  if (!groups) return;
+  Object.entries(layers).forEach(([k, v]) => { if (groups[k]) groups[k].visible = v; });
+}
+
+function applyCornerHighlight() {
+  if (!groups) return;
+  ['suspension','springs','wheels','brakeDiscs'].forEach(gName => {
+    const g = groups[gName]; if (!g) return;
+    g.traverse(c => {
+      if (!c.material) return;
+      if (highlightCorner && c.userData?.corner && c.userData.corner !== highlightCorner)
+        c.material.opacity = 0.07;
+      else
+        c.material.opacity = 0.85;
+    });
+  });
+}
+
+function buildLayerUI() {
+  const list = document.getElementById('layer-list');
+  list.innerHTML = layerDefs.map(l => `
+    <div class="layer-row ${layers[l.key]?'':'off'}" data-layer="${l.key}">
+      <div class="layer-dot" style="background:${layers[l.key] ? l.color : 'transparent'};border-color:${l.color};"></div>
+      <span>${l.label}</span>
+    </div>`).join('');
+  list.querySelectorAll('.layer-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const k = row.dataset.layer;
+      layers[k] = !layers[k];
+      buildLayerUI(); applyLayers();
+    });
+  });
+
+  const cbtns = document.getElementById('corner-btns');
+  cbtns.innerHTML = cornerDefs.map(c => `
+    <button class="cbtn ${highlightCorner === c.key ? 'active' : ''}"
+      data-corner="${c.key || ''}"
+      style="${highlightCorner === c.key ? `border-color:${c.color};color:${c.color};background:${c.color}22;` : ''}">
+      ${c.label}
+    </button>`).join('');
+  cbtns.querySelectorAll('.cbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      highlightCorner = btn.dataset.corner || null;
+      buildLayerUI(); applyCornerHighlight();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Info bar
+// ═══════════════════════════════════════════════════════════
+function updateInfoBar(doc) {
+  const bar  = document.getElementById('info-bar');
+  const vi   = doc.vehicle_info || {};
+  const ch   = doc.chassis || {};
+  const cg   = ch.center_of_gravity || [];
+  const wb   = ch.wheelbase;
+  const fb   = wb && cg[0] != null ? ((wb - Math.abs(cg[0])) / wb * 100).toFixed(1) : '—';
+  const mass = ch.mass_total;
+  const pt   = doc.powertrain;
+  const tc   = pt?.engine?.torque_curve || [];
+  const peakT = tc.length ? Math.max(...tc.map(d=>d[1])).toFixed(0) : '—';
+  const peakP = tc.length ? (Math.max(...tc.map(([r,t])=>t*r*Math.PI/30000))).toFixed(1) : '—';
+
+  bar.innerHTML = `
+    <div class="info-item"><span class="info-val" style="color:var(--ac)">${vi.make || '—'} ${vi.model || ''}</span><span class="info-unit">${vi.year || ''}</span></div>
+    <div style="color:var(--brdL)">|</div>
+    <div class="info-item"><span class="info-label">layout</span><span class="info-val">${pt?.layout || '—'}</span></div>
+    <div class="info-item"><span class="info-label">mass</span><span class="info-val">${mass ? mass.toFixed(0) : '—'}</span><span class="info-unit">kg</span></div>
+    <div class="info-item"><span class="info-label">wheelbase</span><span class="info-val">${wb ? wb.toFixed(3) : '—'}</span><span class="info-unit">m</span></div>
+    <div class="info-item"><span class="info-label">F/R bias</span><span class="info-val">${fb}</span><span class="info-unit">%</span></div>
+    <div class="info-item"><span class="info-label">peak T</span><span class="info-val">${peakT}</span><span class="info-unit">Nm</span></div>
+    <div class="info-item"><span class="info-label">peak P</span><span class="info-val">${peakP}</span><span class="info-unit">kW</span></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Render loop
+// ═══════════════════════════════════════════════════════════
+function animate() {
+  requestAnimationFrame(animate);
+  if (renderer && scene && camera) renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Library management
+// ═══════════════════════════════════════════════════════════
+function addToLibrary(name, source, doc) {
+  if (!doc._metadata || !doc.vehicle_info) return;
+  library.push({ name, source, doc });
+  rebuildCarList();
+  document.getElementById('s-count').textContent = library.length;
+}
+
+function rebuildCarList() {
+  const el = document.getElementById('car-list');
+  if (!library.length) {
+    el.innerHTML = '<div class="empty-list">Drop or pick a folder of<br>.svj.json files to begin.</div>';
+    return;
+  }
+  el.innerHTML = library.map((item, i) => {
+    const vi = item.doc.vehicle_info || {};
+    const ch = item.doc.chassis || {};
+    const pt = item.doc.powertrain || {};
+    return `<div class="car-item" data-idx="${i}">
+      <div class="car-name">${vi.make || '?'} ${vi.model || '?'}</div>
+      <div class="car-meta">${vi.year || '?'} · ${pt.layout || '?'} · ${ch.mass_total ? ch.mass_total.toFixed(0)+'kg' : '—'}</div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.car-item').forEach(row => {
+    row.addEventListener('click', () => {
+      el.querySelectorAll('.car-item').forEach(r => r.classList.remove('active'));
+      row.classList.add('active');
+      buildScene(library[+row.dataset.idx].doc);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  File ingestion
+// ═══════════════════════════════════════════════════════════
+async function expandZip(zipFile) {
+  const zip = await JSZip.loadAsync(zipFile);
+  const out = [];
+  for (const [relPath, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    if (!/\.svj\.json$/i.test(relPath) && !/\.json$/i.test(relPath)) continue;
+    out.push({
+      name: relPath.split('/').pop(),
+      source: zipFile.name + '!/' + relPath,
+      text: async () => await entry.async('string'),
+    });
+  }
+  return out;
+}
+
+async function ingestFiles(fileList) {
+  const raw = [...fileList];
+  const zips    = raw.filter(f => /\.zip$/i.test(f.name));
+  const jsonish = raw.filter(f => /\.svj\.json$/i.test(f.name) || /\.json$/i.test(f.name));
+
+  const fromZips  = (await Promise.all(zips.map(z => expandZip(z).catch(()=>[])))).flat();
+  const fromFiles = jsonish.map(f => ({
+    name:   f.name,
+    source: f.webkitRelativePath || f.name,
+    text:   () => f.text(),
+  }));
+
+  for (const vf of [...fromFiles, ...fromZips]) {
+    try {
+      const txt = await vf.text();
+      const doc = JSON.parse(txt);
+      addToLibrary(vf.name, vf.source, doc);
+    } catch (_) { /* skip bad files */ }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Keyboard shortcuts
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const map = {'1':'FL','2':'FR','3':'RL','4':'RR','0':null};
+  if (Object.prototype.hasOwnProperty.call(map, e.key)) {
+    highlightCorner = map[e.key]; buildLayerUI(); applyCornerHighlight();
+  }
+  if (e.key === 'i') setView('iso');
+  if (e.key === 'f') setView('front');
+  if (e.key === 'b') setView('rear');
+  if (e.key === 'l') setView('left');
+  if (e.key === 't') setView('top');
+  if (e.key === 'r') { if(target){target.set(0,0.25,1.15);spherical.set(4.5,Math.PI/4,Math.PI/6);updateCamera();} }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  Resize
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (!renderer || !camera) return;
+  const vp = document.getElementById('viewport');
+  camera.aspect = vp.clientWidth / vp.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(vp.clientWidth, vp.clientHeight);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  Drag & drop on the whole window
+// ═══════════════════════════════════════════════════════════
+document.body.addEventListener('dragover',  e => e.preventDefault());
+document.body.addEventListener('drop', async e => {
+  e.preventDefault();
+  const items = e.dataTransfer.items;
+  if (items && items.length && items[0].webkitGetAsEntry) {
+    const files = [];
+    const walk  = async (entry, path) => {
+      if (entry.isFile) {
+        files.push(await new Promise(r => entry.file(f => {
+          f.webkitRelativePath = path + f.name; r(f);
+        })));
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        let batch;
+        do {
+          batch = await new Promise(r => reader.readEntries(r));
+          for (const en of batch) await walk(en, path + entry.name + '/');
+        } while (batch.length);
+      }
+    };
+    for (const it of items) { const en = it.webkitGetAsEntry(); if (en) await walk(en, ''); }
+    await ingestFiles(files);
+  } else {
+    await ingestFiles(e.dataTransfer.files);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  Wire up file pickers
+// ═══════════════════════════════════════════════════════════
+document.getElementById('file-input').addEventListener('change',
+  e => ingestFiles(e.target.files));
+document.getElementById('folder-input').addEventListener('change',
+  e => ingestFiles(e.target.files));
+
+// ── Init UI ──
+buildLayerUI();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1984 @@
+<!doctype html>
+<!--
+   Copyright 2026 RFloEng
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SVJ Library Browser</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.32.0/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg:      #08090c;
+    --panel:   #0f1117;
+    --panel2:  #161a24;
+    --panel3:  #1c2130;
+    --border:  #252b3a;
+    --borderL: #333b50;
+    --text:    #dfe3ed;
+    --muted:   #6e7a96;
+    --dim:     #404c66;
+    --accent:  #ff5131;
+    --accentD: rgba(255,81,49,.18);
+    --accent2: #f0b429;
+    --blue:    #4d9fff;
+    --good:    #34d27b;
+    --warn:    #f0b429;
+    --bad:     #f0524f;
+    --purple:  #b06aff;
+    --cyan:    #2dd4bf;
+    --orange:  #ff8c42;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+    background: var(--bg); color: var(--text); font-size: 13px;
+  }
+  header {
+    padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.5px; color: var(--text); }
+  header .sub { color: var(--muted); font-size: 11px; }
+  header .spacer { flex: 1; }
+  header .stats { display: flex; gap: 18px; font-size: 11px; color: var(--muted); }
+  header .stats b { color: var(--accent); font-weight: 600; }
+  .dropzone {
+    background: var(--panel2); border: 1px dashed var(--borderL); border-radius: 5px;
+    padding: 8px 14px; cursor: pointer; color: var(--muted); font-size: 11px;
+  }
+  .dropzone.drag { border-color: var(--accent); color: var(--accent); }
+  .dropzone input { display: none; }
+
+  .tabs {
+    display: flex; gap: 0; padding: 0 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 16px; cursor: pointer; color: var(--muted);
+    border-bottom: 2px solid transparent; font-size: 12px; letter-spacing: 0.3px;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  main { padding: 16px 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+           padding: 14px; margin-bottom: 14px; }
+  h2 { font-size: 13px; margin: 0 0 10px 0; font-weight: 600; color: var(--muted);
+       text-transform: uppercase; letter-spacing: 0.8px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .col { flex: 1; min-width: 280px; }
+
+  /* Master table */
+  .table-wrap { overflow: auto; max-height: 70vh; border: 1px solid var(--border); border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead { position: sticky; top: 0; background: var(--panel2); z-index: 1; }
+  th, td { padding: 5px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--dim); font-weight: 600; cursor: pointer; user-select: none; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+  th.sort-asc::after  { content: ' ▲'; color: var(--accent); }
+  th.sort-desc::after { content: ' ▼'; color: var(--accent); }
+  tr:hover td { background: var(--panel2); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.bad  { color: var(--bad); }
+  td.warn { color: var(--warn); }
+  .chip { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 10px;
+          background: var(--panel3); color: var(--muted); border: 1px solid var(--border); }
+  .chip.ev  { background: rgba(52,210,123,.12);  color: var(--good);  border-color: rgba(52,210,123,.3); }
+  .chip.est { background: rgba(240,180,41,.12);  color: var(--warn);  border-color: rgba(240,180,41,.3); }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .filters input, .filters select {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 3px; padding: 5px 9px; font-size: 11px; min-width: 120px;
+    font-family: inherit;
+  }
+  .filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
+
+  /* Tires tab */
+  .tire-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .tire-card {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 5px;
+    padding: 12px;
+  }
+  .tire-card .label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--accent2); }
+  .tire-card .meta { color: var(--muted); font-size: 11px; }
+  .tire-card .cars { margin-top: 8px; font-size: 11px; }
+  .tire-card .cars div { padding: 2px 0; }
+
+  /* Curves tab */
+  #curvePlot { width: 100%; height: 70vh; }
+  .curve-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  .curve-controls label { color: var(--muted); font-size: 11px; }
+  .curve-controls select, .curve-controls input {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 3px; padding: 4px 8px; font-size: 11px; font-family: inherit;
+  }
+  .car-picker {
+    display: flex; flex-wrap: wrap; gap: 5px; max-height: 110px; overflow-y: auto;
+    background: var(--panel2); border: 1px solid var(--border); padding: 8px; border-radius: 4px;
+  }
+  .car-pill {
+    padding: 2px 10px; border-radius: 3px; background: var(--panel3); cursor: pointer;
+    font-size: 11px; border: 1px solid var(--border); user-select: none; color: var(--muted);
+  }
+  .car-pill.on { background: var(--accentD); color: var(--text); border-color: var(--accent); }
+  .btn {
+    background: var(--panel2); color: var(--muted); border: 1px solid var(--border);
+    padding: 4px 11px; border-radius: 3px; font-size: 11px; cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--text); }
+  .btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+
+  /* Vehicle detail drawer */
+  .detail {
+    background: var(--panel2); border-radius: 4px; padding: 10px;
+    font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 11px; white-space: pre;
+    max-height: 40vh; overflow: auto; border: 1px solid var(--border);
+  }
+  .empty { color: var(--dim); font-size: 12px; padding: 40px; text-align: center; }
+  .errors { color: var(--bad); font-size: 11px; padding: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SVJ Library Browser</h1>
+  <span class="sub">single-file · offline</span>
+  <label class="dropzone" id="dz">
+    📁 drop a <b>folder</b> (any depth), a <b>.zip</b>, or <b>.svj.json</b> files here
+    <input type="file" id="folderInput" multiple webkitdirectory directory style="display:none;">
+    <input type="file" id="fileInput"   multiple accept=".json,.svj.json,.zip" style="display:none;">
+    <button class="btn" id="btnPickFolder" type="button">Pick folder</button>
+    <button class="btn" id="btnPickFiles"  type="button">Pick files / zip</button>
+  </label>
+  <div class="spacer"></div>
+  <div class="stats">
+    <div>vehicles <b id="s-veh">0</b></div>
+    <div>unique tires <b id="s-tires">0</b></div>
+    <div>curves <b id="s-curves">0</b></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="index">📋 Index</div>
+  <div class="tab" data-tab="tires">🛞 Tires</div>
+  <div class="tab" data-tab="curves">📈 Curves</div>
+  <div class="tab" data-tab="detail">🔍 Detail</div>
+  <div class="tab" data-tab="diff">⚖ Diff</div>
+  <div class="tab" data-tab="pacejka">🔬 Pacejka</div>
+  <div class="tab" data-tab="fingerprint">🕸 Fingerprint</div>
+  <div class="tab" data-tab="heatmap">📊 Heatmap</div>
+</div>
+
+<main>
+  <div class="tab-pane" id="pane-index">
+    <div class="panel">
+      <div class="filters">
+        <input id="f-text" placeholder="🔎 search make/model/year/file…">
+        <select id="f-drive">
+          <option value="">All drive types</option>
+        </select>
+        <select id="f-topo">
+          <option value="">All suspensions</option>
+        </select>
+        <label style="color:var(--muted);font-size:12px;">
+          <input type="checkbox" id="f-ev"> EVs only
+        </label>
+        <button class="btn" id="b-export-csv">Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl">
+          <thead><tr id="thead-row"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty-index">Drop a folder of <b>.svj.json</b> files above to begin.</div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="pane-tires" style="display:none;">
+    <div class="panel">
+      <h2>Unique tire footprints</h2>
+      <div class="filters">
+        <input id="f-tire" placeholder="🔎 filter tires…">
+        <select id="f-tire-rim"><option value="">All rim Ø</option></select>
+        <select id="f-tire-width"><option value="">All rim widths</option></select>
+        <select id="f-tire-radius"><option value="">All loaded radii</option></select>
+      </div>
+      <div class="tire-grid" id="tire-grid"></div>
+      <div class="empty" id="empty-tires">No tires parsed yet.</div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="pane-curves" style="display:none;">
+    <div class="panel">
+      <h2>Overlay curves across cars</h2>
+      <div class="curve-controls">
+        <label>Curve type:</label>
+        <select id="curveKind">
+          <option value="engine_torque">Engine torque (Nm vs rpm)</option>
+          <option value="engine_power">Engine power (kW vs rpm)</option>
+          <option value="damper_bump">Damper bump (N vs m/s)</option>
+          <option value="damper_rebound">Damper rebound (N vs m/s)</option>
+        </select>
+        <label>Corner:</label>
+        <select id="curveCorner">
+          <option value="">all</option>
+          <option value="FL">FL</option><option value="FR">FR</option>
+          <option value="RL">RL</option><option value="RR">RR</option>
+        </select>
+        <button class="btn" id="b-all">select all</button>
+        <button class="btn" id="b-none">clear</button>
+      </div>
+      <div class="car-picker" id="carPicker"></div>
+      <div id="curvePlot"></div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="pane-detail" style="display:none;">
+    <div class="panel">
+      <h2 id="detail-title">Pick a vehicle from the Index tab</h2>
+      <div class="row">
+        <div class="col"><h2>Vehicle summary</h2><div class="detail" id="detail-sum"></div></div>
+        <div class="col"><h2>Per-corner suspension</h2><div class="detail" id="detail-sus"></div></div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div class="col"><h2>Engine torque + power</h2><div id="detail-engine" style="height:320px;"></div></div>
+        <div class="col"><h2>Damper curves (all 4 corners)</h2><div id="detail-damper" style="height:320px;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="pane-diff" style="display:none;">
+    <div class="panel">
+      <h2>Two-car field comparison</h2>
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <input id="diff-f-text" placeholder="🔎 make / model / year / variant…"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);
+                 border-radius:3px;padding:5px 9px;font-size:11px;min-width:190px;flex:1;font-family:inherit;">
+        <select id="diff-f-make"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);
+                 border-radius:4px;padding:6px 8px;font-size:12px;">
+          <option value="">All makes</option>
+        </select>
+        <select id="diff-f-drive"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);
+                 border-radius:4px;padding:6px 8px;font-size:12px;">
+          <option value="">All drive types</option>
+        </select>
+        <span id="diff-f-count" style="color:var(--muted);font-size:11px;white-space:nowrap;"></span>
+        <button class="btn" id="diff-f-clear" title="Clear filters" style="padding:5px 9px;">✕ clear</button>
+      </div>
+      <!-- Car pickers (populated by rebuildDiffPickers after filtering) -->
+      <div class="diff-controls" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+        <label style="color:var(--muted);font-size:12px;">Car A:</label>
+        <select id="diff-a" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;min-width:220px;flex:1;max-width:380px;">
+          <option value="">— select —</option>
+        </select>
+        <label style="color:var(--muted);font-size:12px;">Car B:</label>
+        <select id="diff-b" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;min-width:220px;flex:1;max-width:380px;">
+          <option value="">— select —</option>
+        </select>
+      </div>
+      <div id="diff-body"></div>
+      <div class="empty" id="empty-diff">Select two cars above to compare them.</div>
+      <div id="diff-curves-engine" style="height:320px;margin-top:16px;display:none;"></div>
+      <div id="diff-curves-damper" style="height:320px;margin-top:12px;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ====== Pacejka tab ====== -->
+  <div class="tab-pane" id="pane-pacejka" style="display:none;">
+    <div class="panel">
+      <h2>Pacejka Magic Formula — tire model curves</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <label style="color:var(--muted);font-size:12px;">Curve:</label>
+        <select id="pj-kind"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;">
+          <option value="lat">Lateral  Fy(α)  — slip angle</option>
+          <option value="lon">Longitudinal  Fx(κ)  — slip ratio</option>
+        </select>
+        <label style="color:var(--muted);font-size:12px;">Corner:</label>
+        <select id="pj-corner"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;">
+          <option value="">all 4 corners</option>
+          <option value="FL">FL</option><option value="FR">FR</option>
+          <option value="RL">RL</option><option value="RR">RR</option>
+        </select>
+        <label style="color:var(--muted);font-size:12px;">Filter make:</label>
+        <select id="pj-f-make"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;">
+          <option value="">All makes</option>
+        </select>
+        <label style="color:var(--muted);font-size:12px;">Filter rim Ø:</label>
+        <select id="pj-f-rim"
+          style="background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-size:11px;font-family:inherit;">
+          <option value="">All sizes</option>
+        </select>
+        <button class="btn" id="pj-all">select all</button>
+        <button class="btn" id="pj-none">clear</button>
+      </div>
+      <div class="car-picker" id="pjCarPicker" style="margin-bottom:10px;"></div>
+      <div class="empty" id="empty-pacejka" style="display:none;">No Pacejka coefficients found in loaded vehicles.
+        <br><span style="font-size:11px;color:var(--muted);">SVJ path: <code>suspension.{corner}.tire.pacejka.{lat|lon}.{B,C,D,E}</code></span></div>
+      <div id="pjPlot" style="width:100%;height:65vh;"></div>
+      <div id="pjTable" style="margin-top:14px;overflow-x:auto;font-size:11px;"></div>
+    </div>
+  </div>
+
+  <!-- ====== Heatmap tab ====== -->
+  <div class="tab-pane" id="pane-heatmap" style="display:none;">
+    <div class="panel">
+      <h2>Library completeness heatmap — per-car × per-subtree</h2>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:11px;color:var(--muted);">
+        <span>Click a column header to sort by that group.</span>
+        <span style="display:flex;align-items:center;gap:4px;">
+          <span style="display:inline-block;width:12px;height:12px;background:rgba(240,82,79,0.35);border-radius:2px;"></span>0–25%
+          <span style="display:inline-block;width:12px;height:12px;background:rgba(240,140,0,0.35);border-radius:2px;margin-left:6px;"></span>25–50%
+          <span style="display:inline-block;width:12px;height:12px;background:rgba(255,191,0,0.30);border-radius:2px;margin-left:6px;"></span>50–75%
+          <span style="display:inline-block;width:12px;height:12px;background:rgba(52,210,123,0.20);border-radius:2px;margin-left:6px;"></span>75–99%
+          <span style="display:inline-block;width:12px;height:12px;background:rgba(52,210,123,0.40);border-radius:2px;margin-left:6px;"></span>100%
+        </span>
+      </div>
+      <div id="hmTable" style="overflow:auto;max-height:75vh;border:1px solid var(--border);border-radius:4px;"></div>
+      <div class="empty" id="empty-heatmap">Drop SVJ files above to begin.</div>
+    </div>
+  </div>
+
+  <!-- ====== Fingerprint tab ====== -->
+  <div class="tab-pane" id="pane-fingerprint" style="display:none;">
+    <div class="panel">
+      <h2>Vehicle handling fingerprint — normalised radar chart</h2>
+      <div class="curve-controls" style="margin-bottom:8px;">
+        <button class="btn" id="fp-all">select all</button>
+        <button class="btn" id="fp-none">clear</button>
+        <span style="color:var(--muted);font-size:10px;margin-left:8px;">
+          Axes normalised to library 5th–95th percentile.
+          Outer rim = highest value for that dimension.
+          <b style="color:var(--text)">Mass</b> and <b style="color:var(--text)">CoG height</b> are inverted (outer = lightest / lowest).
+        </span>
+      </div>
+      <div class="car-picker" id="fpCarPicker" style="margin-bottom:10px;"></div>
+      <div id="fpPlot" style="width:100%;height:65vh;"></div>
+      <div id="fpTable"></div>
+    </div>
+  </div>
+
+  <div class="errors" id="err-area"></div>
+</main>
+
+<script>
+// ----------------------------------------------------------------------
+// Minimal SVJ analysis — mirrors svj_analyze.py semantics.
+// ----------------------------------------------------------------------
+const CORNERS = ["FL","FR","RL","RR"];
+const num = x => {
+  if (x === null || x === undefined) return null;
+  const n = +x;
+  return Number.isFinite(n) ? n : null;
+};
+const dig = (d, ...keys) => {
+  let c = d;
+  for (const k of keys) {
+    if (c && typeof c === "object" && k in c) c = c[k]; else return null;
+  }
+  return c;
+};
+const peakOf = curve => {
+  if (!Array.isArray(curve)) return [null,null];
+  let best = null;
+  for (const pt of curve) {
+    if (!Array.isArray(pt) || pt.length<2) continue;
+    const x = num(pt[0]), y = num(pt[1]);
+    if (x===null || y===null) continue;
+    if (!best || y > best[1]) best = [x,y];
+  }
+  return best || [null,null];
+};
+const torqueToPower = tc => {
+  if (!Array.isArray(tc)) return [];
+  const out = [];
+  for (const pt of tc) {
+    const rpm = num(pt[0]), t = num(pt[1]);
+    if (rpm===null || t===null) continue;
+    out.push([rpm, t * rpm * 2*Math.PI / 60 / 1000]);
+  }
+  return out;
+};
+const tireKey = w => {
+  if (!w) return null;
+  const rd = num(w.rim_diameter), rw = num(w.rim_width), lr = num(w.loaded_radius);
+  if (rd===null && rw===null && lr===null) return null;
+  return [
+    rd!==null ? Math.round(rd*1000*10)/10 : null,
+    rw!==null ? Math.round(rw*1000*10)/10 : null,
+    lr!==null ? Math.round(lr*1000*10)/10 : null,
+  ];
+};
+const tireLabel = k => {
+  if (!k) return "—";
+  const [rd,rw,lr] = k;
+  const rimIn = rd ? rd/25.4 : null;
+  const widIn = rw ? rw/25.4 : null;
+  let base = "";
+  if (widIn !== null) base += widIn.toFixed(1)+"J";
+  if (rimIn !== null) base += "x"+rimIn.toFixed(0)+'"';
+  if (!base) base = "unspecified";
+  if (lr && rd) {
+    const sw = lr - rd/2;
+    if (sw>0 && rw) {
+      const ar = sw/rw*100;
+      base += `  (~${Math.round(ar)}% AR, R=${Math.round(lr)}mm)`;
+    } else if (sw>0) {
+      base += `  (R=${Math.round(lr)}mm)`;
+    }
+  }
+  return base;
+};
+
+function summarize(doc, source) {
+  const meta = doc._metadata || {}, info = doc.vehicle_info || {},
+        ch = doc.chassis || {}, st = doc.steering || {},
+        sus = doc.suspension || {}, pt = doc.powertrain || {},
+        el = doc.electric || {};
+  const mass = num(ch.mass_total), wb = num(ch.wheelbase);
+  const cog = ch.center_of_gravity;
+  const cog_x = Array.isArray(cog) ? num(cog[0]) : null;
+  const cog_z = Array.isArray(cog) ? num(cog[2]) : null;
+  const front_frac = (cog_x !== null && wb) ? Math.max(0,Math.min(1,1+cog_x/wb)) : null;
+
+  const eng = pt.engine || {};
+  const tc = eng.torque_curve;
+  const [pt_rpm, peak_t] = peakOf(tc);
+  const pc = torqueToPower(tc);
+  const [pp_rpm, peak_p_kw] = peakOf(pc);
+
+  const engine_idle_rpm = num(eng.idle_rpm);
+  const engine_max_rpm  = num(eng.max_rpm);
+  const engine_displacement_cc = num(eng.displacement);
+  const engine_configuration   = eng.configuration || null;
+  const gbox = pt.gearbox || {};
+  const diffs = pt.differentials || [];
+  const final_drive = diffs[0] ? num(diffs[0].final_drive) : null;
+  const motors = el.motors;
+  const is_ev = !!motors || (pt.layout && String(pt.layout).includes("EV"));
+  const battery_kwh = num(dig(el,"battery","capacity_kwh"));
+
+  const corners = {}, tires = {};
+  const uniq = new Set();
+  let est_corners = 0;
+  for (const c of CORNERS) {
+    const co = sus[c] || {};
+    const top = co.topology || {};
+    const w = co.wheel || {};
+    const sp = co.spring || {}, da = co.damper || {}, br = co.brake || {};
+    const disc = br.disc || {};
+    const key = tireKey(w);
+    tires[c] = {
+      key, label: tireLabel(key),
+      rim_diameter_mm: key ? key[0] : null,
+      rim_width_mm: key ? key[1] : null,
+      loaded_radius_mm: key ? key[2] : null,
+      wheel_mass_kg: num(w.mass),
+    };
+    if (key) uniq.add(key.join("|"));
+    corners[c] = {
+      topology: top.system_type || null,
+      spring_type: sp.type || null,
+      spring_rate_Nm: num(sp.rate),
+      damper_type: da.type || null,
+      damper_bump: Array.isArray(da.bump_curve) ? da.bump_curve : [],
+      damper_rebound: Array.isArray(da.rebound_curve) ? da.rebound_curve : [],
+      brake_disc_mm: (num(disc.outer_diameter) || 0) * 1000 || null,
+      brake_disc_type: disc.type || null,
+      estimated: !!co._est,
+    };
+    if (corners[c].estimated) est_corners++;
+
+    // Pacejka coefficients — try tire.pacejka or tile.magic_formula
+    const tire_block = co.tire || {};
+    const pj_block   = tire_block.pacejka || tire_block.magic_formula || null;
+    if (pj_block) {
+      const normCoeffs = obj => {
+        if (!obj) return null;
+        const B = num(obj.B ?? obj.b), C = num(obj.C ?? obj.c);
+        const D = num(obj.D ?? obj.d), E = num(obj.E ?? obj.e);
+        return (B!==null || C!==null || D!==null || E!==null) ? {B, C, D, E} : null;
+      };
+      const lat = normCoeffs(pj_block.lat ?? pj_block.lateral ?? pj_block.fy ?? null);
+      const lon = normCoeffs(pj_block.lon ?? pj_block.longitudinal ?? pj_block.fx ?? null);
+      const mz  = normCoeffs(pj_block.mz ?? pj_block.aligning ?? null);
+      if (lat || lon || mz) corners[c].pacejka = { lat, lon, mz };
+    }
+  }
+
+  const _COMP_KEYS = [
+    "make","model","year","drive_type",
+    "mass_total_kg","wheelbase_m","track_front_m","track_rear_m",
+    "cog_height_m","front_weight_fraction",
+    "steering_type","steering_ratio",
+    "topology_front","topology_rear",
+    "spring_rate_front_Nm","spring_rate_rear_Nm",
+    "peak_torque_Nm","peak_torque_rpm","peak_power_kW","peak_power_rpm",
+    "engine_idle_rpm","engine_max_rpm","engine_displacement_cc","engine_configuration",
+    "gearbox_type","final_drive","data_confidence",
+  ];
+  const _r = {
+    source,
+    make: info.make || "?",
+    model: info.model || "?",
+    year: info.year || null,
+    variant: info.variant || "",
+    drive_type: info.drive_type || "?",
+    is_ev,
+    mass_total_kg: mass,
+    wheelbase_m: wb,
+    track_front_m: num(ch.track_front),
+    track_rear_m: num(ch.track_rear),
+    cog_height_m: cog_z !== null ? -cog_z : null,
+    front_weight_fraction: front_frac,
+    steering_type: st.type || null,
+    steering_ratio: num(st.overall_ratio),
+    topology_front: corners.FL.topology || corners.FR.topology,
+    topology_rear:  corners.RL.topology || corners.RR.topology,
+    spring_rate_front_Nm: corners.FL.spring_rate_Nm || corners.FR.spring_rate_Nm,
+    spring_rate_rear_Nm:  corners.RL.spring_rate_Nm || corners.RR.spring_rate_Nm,
+    peak_torque_Nm: peak_t,
+    peak_torque_rpm: pt_rpm,
+    peak_power_kW: peak_p_kw,
+    peak_power_hp: peak_p_kw !== null ? peak_p_kw * 1.341 : null,
+    peak_power_rpm: pp_rpm,
+    engine_idle_rpm, engine_max_rpm, engine_displacement_cc, engine_configuration,
+    power_curve: pc,
+    torque_curve: Array.isArray(tc) ? tc : [],
+    gearbox_type: gbox.type || null,
+    gear_count: Array.isArray(gbox.ratios) ? gbox.ratios.length : 0,
+    final_drive,
+    battery_kwh,
+    unique_tires_on_car: uniq.size,
+    estimated_corners: est_corners,
+    data_confidence: dig(meta,"data_origin","confidence"),
+    spec_version: meta.version || null,
+    corners,
+    tires_by_corner: tires,
+    has_pacejka: CORNERS.some(c => corners[c]?.pacejka),
+    _raw: doc,
+  };
+  _r.completeness_pct = +(_COMP_KEYS.filter(k => _r[k] !== null && _r[k] !== undefined).length / _COMP_KEYS.length * 100).toFixed(1);
+  return _r;
+}
+
+function buildTireCatalogue(vehicles) {
+  const bucket = new Map();
+  for (const v of vehicles) {
+    const label = `${v.make} ${v.model} (${v.year})`;
+    for (const c of CORNERS) {
+      const t = v.tires_by_corner[c];
+      if (!t.key) continue;
+      const kStr = t.key.join("|");
+      if (!bucket.has(kStr)) {
+        bucket.set(kStr, { key: t.key, corners: {}, cars: [] });
+      }
+      const b = bucket.get(kStr);
+      b.corners[c] = (b.corners[c] || 0) + 1;
+      if (!b.cars.includes(label)) b.cars.push(label);
+    }
+  }
+  const out = [];
+  for (const b of bucket.values()) {
+    out.push({
+      key: b.key,
+      label: tireLabel(b.key),
+      rim_diameter_mm: b.key[0],
+      rim_diameter_in: b.key[0] ? +(b.key[0]/25.4).toFixed(1) : null,
+      rim_width_mm: b.key[1],
+      rim_width_in: b.key[1] ? +(b.key[1]/25.4).toFixed(2) : null,
+      loaded_radius_mm: b.key[2],
+      corner_counts: b.corners,
+      car_count: b.cars.length,
+      cars: b.cars,
+    });
+  }
+  out.sort((a,b) => (a.rim_diameter_mm||0)-(b.rim_diameter_mm||0) ||
+                    (a.rim_width_mm||0)-(b.rim_width_mm||0));
+  return out;
+}
+
+// ----------------------------------------------------------------------
+// UI state + rendering
+// ----------------------------------------------------------------------
+const state = {
+  vehicles: [],
+  tires: [],
+  errors: [],
+  sortKey: "make", sortDir: 1,
+  tab: "index",
+  selected: new Set(),
+  pjSelected: new Set(),
+  fpSelected: new Set(),
+  hmSort: { k: "overall", dir: -1 },
+};
+
+const COLS = [
+  {k:"make",  h:"Make"},
+  {k:"model", h:"Model"},
+  {k:"year",  h:"Year", num:true},
+  {k:"drive_type", h:"Drive"},
+  {k:"is_ev", h:"EV", fmt: v=>v?'<span class="chip ev">EV</span>':''},
+  {k:"mass_total_kg", h:"Mass kg", num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"wheelbase_m", h:"WB m", num:true, fmt: v => v?.toFixed?.(3) ?? ""},
+  {k:"track_front_m", h:"TrF m", num:true, fmt: v => v?.toFixed?.(3) ?? ""},
+  {k:"track_rear_m", h:"TrR m", num:true, fmt: v => v?.toFixed?.(3) ?? ""},
+  {k:"cog_height_m", h:"CoG h", num:true, fmt: v => v?.toFixed?.(3) ?? ""},
+  {k:"front_weight_fraction", h:"F wt%", num:true, fmt: v => v!==null ? (v*100).toFixed(1)+"%" : ""},
+  {k:"topology_front", h:"Susp F"},
+  {k:"topology_rear",  h:"Susp R"},
+  {k:"peak_torque_Nm", h:"Peak Nm", num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"peak_power_kW",  h:"Peak kW", num:true, fmt: v => v?.toFixed?.(1) ?? ""},
+  {k:"peak_power_hp",  h:"Peak hp", num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"peak_power_rpm",          h:"Peak P rpm",    num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"engine_configuration",    h:"Engine config"},
+  {k:"engine_displacement_cc",  h:"Displ cc",      num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"engine_idle_rpm",         h:"Idle rpm",      num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"engine_max_rpm",          h:"Max rpm",       num:true, fmt: v => v?.toFixed?.(0) ?? ""},
+  {k:"gear_count", h:"Gears", num:true},
+  {k:"final_drive", h:"Final", num:true, fmt: v => v?.toFixed?.(3) ?? ""},
+  {k:"battery_kwh", h:"kWh", num:true, fmt: v => v?.toFixed?.(1) ?? ""},
+  {k:"unique_tires_on_car", h:"Tires", num:true},
+  {k:"estimated_corners", h:"Est", num:true,
+    fmt: v => v ? `<span class="chip est">${v}</span>` : ""},
+  {k:"completeness_pct", h:"Complete%", num:true, fmt: v => v !== null ? v.toFixed(1)+"%" : ""},
+  {k:"data_confidence", h:"Conf"},
+  {k:"source", h:"File"},
+];
+
+function buildHead() {
+  const tr = document.getElementById("thead-row");
+  tr.innerHTML = "";
+  for (const c of COLS) {
+    const th = document.createElement("th");
+    th.textContent = c.h;
+    th.dataset.k = c.k;
+    th.addEventListener("click", () => {
+      if (state.sortKey === c.k) state.sortDir *= -1;
+      else { state.sortKey = c.k; state.sortDir = 1; }
+      renderIndex();
+    });
+    tr.appendChild(th);
+  }
+}
+
+function applyFilters(rows) {
+  const q = document.getElementById("f-text").value.toLowerCase();
+  const drv = document.getElementById("f-drive").value;
+  const top = document.getElementById("f-topo").value;
+  const evOnly = document.getElementById("f-ev").checked;
+  return rows.filter(v => {
+    if (evOnly && !v.is_ev) return false;
+    if (drv && v.drive_type !== drv) return false;
+    if (top && v.topology_front !== top && v.topology_rear !== top) return false;
+    if (q) {
+      const hay = `${v.make} ${v.model} ${v.year} ${v.variant} ${v.source}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderIndex() {
+  const tbody = document.getElementById("tbody");
+  const empty = document.getElementById("empty-index");
+  if (!state.vehicles.length) { tbody.innerHTML = ""; empty.style.display = ""; return; }
+  empty.style.display = "none";
+
+  const drvSel = document.getElementById("f-drive");
+  const topSel = document.getElementById("f-topo");
+  if (drvSel.options.length <= 1) {
+    [...new Set(state.vehicles.map(v=>v.drive_type))].sort().forEach(x => {
+      const o = document.createElement("option"); o.value = o.textContent = x; drvSel.appendChild(o);
+    });
+  }
+  if (topSel.options.length <= 1) {
+    const tops = new Set();
+    state.vehicles.forEach(v => { if(v.topology_front) tops.add(v.topology_front); if(v.topology_rear) tops.add(v.topology_rear); });
+    [...tops].sort().forEach(x => {
+      const o = document.createElement("option"); o.value = o.textContent = x; topSel.appendChild(o);
+    });
+  }
+
+  const rows = applyFilters(state.vehicles.slice()).sort((a,b) => {
+    const av = a[state.sortKey], bv = b[state.sortKey];
+    if (av === bv) return 0;
+    if (av === null || av === undefined) return 1;
+    if (bv === null || bv === undefined) return -1;
+    if (typeof av === "number" && typeof bv === "number") return (av-bv)*state.sortDir;
+    return String(av).localeCompare(String(bv)) * state.sortDir;
+  });
+
+  document.querySelectorAll("#thead-row th").forEach(th => {
+    th.classList.remove("sort-asc","sort-desc");
+    if (th.dataset.k === state.sortKey)
+      th.classList.add(state.sortDir > 0 ? "sort-asc" : "sort-desc");
+  });
+
+  tbody.innerHTML = rows.map((v, i) => {
+    const cells = COLS.map(c => {
+      let val = v[c.k];
+      if (c.fmt) val = c.fmt(val);
+      else if (val === null || val === undefined) val = "";
+      return `<td class="${c.num?'num':''}">${val}</td>`;
+    }).join("");
+    return `<tr data-src="${v.source}">${cells}</tr>`;
+  }).join("");
+
+  tbody.querySelectorAll("tr").forEach(tr => {
+    tr.addEventListener("click", () => {
+      const v = state.vehicles.find(x => x.source === tr.dataset.src);
+      if (v) showDetail(v);
+    });
+  });
+  document.getElementById("s-veh").textContent = state.vehicles.length;
+}
+
+function renderTires() {
+  const grid = document.getElementById("tire-grid");
+  const empty = document.getElementById("empty-tires");
+  if (!state.tires.length) { grid.innerHTML = ""; empty.style.display = ""; return; }
+  empty.style.display = "none";
+  const q      = document.getElementById("f-tire").value.toLowerCase();
+  const rim    = document.getElementById("f-tire-rim").value;
+  const width  = document.getElementById("f-tire-width").value;
+  const radius = document.getElementById("f-tire-radius").value;
+
+  const rimSel = document.getElementById("f-tire-rim");
+  const widSel = document.getElementById("f-tire-width");
+  const radSel = document.getElementById("f-tire-radius");
+  const existingRims = new Set([...rimSel.options].map(o=>o.value).filter(Boolean));
+  const existingWids = new Set([...widSel.options].map(o=>o.value).filter(Boolean));
+  const existingRads = new Set([...radSel.options].map(o=>o.value).filter(Boolean));
+
+  [...new Set(state.tires.map(t=>t.rim_diameter_in).filter(x=>x!==null))].sort((a,b)=>a-b).forEach(x => {
+    const v = x+'"';
+    if (!existingRims.has(v)) { const o = document.createElement("option"); o.value = o.textContent = v; rimSel.appendChild(o); }
+  });
+  [...new Set(state.tires.map(t=>t.rim_width_in).filter(x=>x!==null))].sort((a,b)=>a-b).forEach(x => {
+    const v = x+'J';
+    if (!existingWids.has(v)) { const o = document.createElement("option"); o.value = o.textContent = v; widSel.appendChild(o); }
+  });
+  [...new Set(state.tires.map(t=>t.loaded_radius_mm).filter(x=>x!==null))].sort((a,b)=>a-b).forEach(x => {
+    const v = x+'mm';
+    if (!existingRads.has(v)) { const o = document.createElement("option"); o.value = o.textContent = v; radSel.appendChild(o); }
+  });
+
+  const rows = state.tires.filter(t => {
+    if (rim    && (t.rim_diameter_in + '"')    !== rim)    return false;
+    if (width  && (t.rim_width_in + 'J')       !== width)  return false;
+    if (radius && (t.loaded_radius_mm + 'mm')  !== radius) return false;
+    if (q) {
+      const hay = (t.label + " " + t.cars.join(" ")).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  grid.innerHTML = rows.map(t => `
+    <div class="tire-card">
+      <div class="label">${t.label}</div>
+      <div class="meta">
+        rim ${t.rim_diameter_in ?? '?'}" × ${t.rim_width_in ?? '?'}"${
+          t.loaded_radius_mm ? ` · loaded R=${t.loaded_radius_mm}mm` : ""
+        }
+      </div>
+      <div class="meta" style="margin-top:4px;">
+        corners: ${Object.entries(t.corner_counts).map(([k,v])=>`${k}×${v}`).join(", ") || "—"}
+      </div>
+      <div class="cars">
+        <div style="color:var(--muted);margin-bottom:3px;">on ${t.car_count} car${t.car_count>1?"s":""}:</div>
+        ${t.cars.map(c=>`<div>• ${c}</div>`).join("")}
+      </div>
+    </div>
+  `).join("");
+  document.getElementById("s-tires").textContent = state.tires.length;
+}
+
+function rebuildCarPicker() {
+  const el = document.getElementById("carPicker");
+  el.innerHTML = "";
+  for (const v of state.vehicles) {
+    const label = `${v.make} ${v.model} (${v.year})`;
+    const pill = document.createElement("div");
+    pill.className = "car-pill" + (state.selected.has(v.source) ? " on" : "");
+    pill.textContent = label;
+    pill.addEventListener("click", () => {
+      if (state.selected.has(v.source)) state.selected.delete(v.source);
+      else state.selected.add(v.source);
+      rebuildCarPicker();
+      renderCurves();
+    });
+    el.appendChild(pill);
+  }
+}
+
+function renderCurves() {
+  const kind = document.getElementById("curveKind").value;
+  const corner = document.getElementById("curveCorner").value;
+  const plot = document.getElementById("curvePlot");
+  const traces = [];
+  const labels = {
+    engine_torque: {x:"rpm", y:"Nm"},
+    engine_power:  {x:"rpm", y:"kW"},
+    damper_bump:   {x:"m/s", y:"N"},
+    damper_rebound:{x:"m/s", y:"N"},
+  }[kind];
+  let totalCurves = 0;
+  for (const v of state.vehicles) {
+    if (!state.selected.has(v.source)) continue;
+    const label = `${v.make} ${v.model} (${v.year})`;
+    if (kind === "engine_torque" || kind === "engine_power") {
+      const pts = kind === "engine_torque" ? v.torque_curve : v.power_curve;
+      if (!pts || !pts.length) continue;
+      traces.push({
+        x: pts.map(p=>p[0]), y: pts.map(p=>p[1]),
+        mode:"lines+markers", name: label, type:"scatter",
+      });
+      totalCurves++;
+    } else {
+      const k = kind === "damper_bump" ? "damper_bump" : "damper_rebound";
+      for (const c of CORNERS) {
+        if (corner && c !== corner) continue;
+        const pts = v.corners[c][k];
+        if (!pts || !pts.length) continue;
+        traces.push({
+          x: pts.map(p=>p[0]), y: pts.map(p=>p[1]),
+          mode:"lines+markers", name: `${label} · ${c}`, type:"scatter",
+        });
+        totalCurves++;
+      }
+    }
+  }
+  Plotly.newPlot(plot, traces, {
+    paper_bgcolor:"#0f1117", plot_bgcolor:"#0f1117",
+    font:{color:"#dfe3ed", family:"'JetBrains Mono',monospace"},
+    margin:{l:55,r:20,t:20,b:45},
+    xaxis:{title:labels.x, gridcolor:"#252b3a", zerolinecolor:"#252b3a"},
+    yaxis:{title:labels.y, gridcolor:"#252b3a", zerolinecolor:"#252b3a"},
+    legend:{bgcolor:"rgba(0,0,0,0)", bordercolor:"#252b3a", borderwidth:1},
+    showlegend:true,
+  }, {responsive:true, displaylogo:false});
+  document.getElementById("s-curves").textContent = totalCurves;
+}
+
+// -----------------------------------------------------------------------
+// Pacejka Magic Formula visualisation
+// -----------------------------------------------------------------------
+
+/** Pacejka '89 Magic Formula: F = D·sin(C·atan(B·x − E·(B·x − atan(B·x)))) */
+function magicFormula(B, C, D, E, x) {
+  if (B===null||C===null||D===null) return null;
+  const e = E ?? 0;
+  const bx = B * x;
+  return D * Math.sin(C * Math.atan(bx - e * (bx - Math.atan(bx))));
+}
+
+/** Generate a curve [[x, F(x)], …] over the given x range at N points. */
+function pjCurvePoints(coeffs, xMin, xMax, N=200) {
+  if (!coeffs || coeffs.B===null || coeffs.C===null || coeffs.D===null) return null;
+  const pts = [];
+  for (let i=0; i<=N; i++) {
+    const x = xMin + (xMax - xMin) * i / N;
+    const y = magicFormula(coeffs.B, coeffs.C, coeffs.D, coeffs.E, x);
+    if (y !== null) pts.push([x, y]);
+  }
+  return pts;
+}
+
+function pjFilteredVehicles() {
+  const make = document.getElementById("pj-f-make")?.value || "";
+  const rim  = document.getElementById("pj-f-rim")?.value  || "";
+  return state.vehicles.filter(v => {
+    if (!v.has_pacejka) return false;
+    if (make && v.make !== make) return false;
+    if (rim) {
+      const match = CORNERS.some(c => {
+        const t = v.tires_by_corner[c];
+        return t.rim_diameter_mm !== null && (+(t.rim_diameter_mm/25.4).toFixed(1)+'"') === rim;
+      });
+      if (!match) return false;
+    }
+    return true;
+  });
+}
+
+function rebuildPacejkaPicker() {
+  const makeSel = document.getElementById("pj-f-make");
+  const rimSel  = document.getElementById("pj-f-rim");
+  const existingMakes = new Set([...makeSel.options].map(o=>o.value).filter(Boolean));
+  const existingRims  = new Set([...rimSel.options].map(o=>o.value).filter(Boolean));
+
+  [...new Set(state.vehicles.filter(v=>v.has_pacejka).map(v=>v.make).filter(Boolean))].sort().forEach(m => {
+    if (!existingMakes.has(m)) { const o=document.createElement("option"); o.value=o.textContent=m; makeSel.appendChild(o); }
+  });
+  state.vehicles.filter(v=>v.has_pacejka).forEach(v => {
+    CORNERS.forEach(c => {
+      const rd = v.tires_by_corner[c]?.rim_diameter_mm;
+      if (rd==null) return;
+      const lbl = +(rd/25.4).toFixed(1)+'"';
+      if (!existingRims.has(lbl)) { const o=document.createElement("option"); o.value=o.textContent=lbl; rimSel.appendChild(o); }
+    });
+  });
+
+  const picker = document.getElementById("pjCarPicker");
+  picker.innerHTML = "";
+  const filtered = pjFilteredVehicles();
+  for (const v of filtered) {
+    const label = `${v.make} ${v.model} (${v.year ?? "?"})`;
+    const pill = document.createElement("div");
+    pill.className = "car-pill" + (state.pjSelected.has(v.source) ? " on" : "");
+    pill.textContent = label;
+    pill.addEventListener("click", () => {
+      if (state.pjSelected.has(v.source)) state.pjSelected.delete(v.source);
+      else state.pjSelected.add(v.source);
+      rebuildPacejkaPicker();
+      renderPacejka();
+    });
+    picker.appendChild(pill);
+  }
+}
+
+function renderPacejka() {
+  const kind   = document.getElementById("pj-kind").value;
+  const corner = document.getElementById("pj-corner").value;
+  const plot   = document.getElementById("pjPlot");
+  const empty  = document.getElementById("empty-pacejka");
+  const tblEl  = document.getElementById("pjTable");
+
+  const isLat = kind === "lat";
+  const xLabel = isLat ? "Slip angle α (deg)" : "Slip ratio κ";
+  const yLabel = isLat ? "Lateral force Fy (normalised by D)" : "Long. force Fx (normalised by D)";
+  const xRange = isLat ? [-20, 20] : [-1, 1];
+  const toPlotX = isLat ? (x => x * 180 / Math.PI) : (x => x);
+
+  const cornersToShow = corner ? [corner] : CORNERS;
+  const traces = [];
+  const tableRows = [];
+
+  const PALETTE = ["#ff5131","#4d9fff","#34d27b","#f0b429","#b06aff","#2dd4bf","#ff8c42","#f0524f"];
+  const DASHES  = ["solid","dot","dash","dashdot"];
+  let colorIdx = 0;
+
+  for (const v of state.vehicles) {
+    if (!state.pjSelected.has(v.source)) continue;
+    const carLabel = `${v.make} ${v.model} (${v.year ?? "?"})`;
+    cornersToShow.forEach((c, ci) => {
+      const pj = v.corners[c]?.pacejka;
+      if (!pj) return;
+      const coeffs = pj[kind];
+      if (!coeffs || coeffs.B===null || coeffs.C===null || coeffs.D===null) return;
+
+      const pts = pjCurvePoints(coeffs, xRange[0] * (isLat ? Math.PI/180 : 1),
+                                        xRange[1] * (isLat ? Math.PI/180 : 1));
+      if (!pts) return;
+
+      traces.push({
+        x: pts.map(p => toPlotX(p[0])),
+        y: pts.map(p => p[1]),
+        mode: "lines",
+        name: `${carLabel} · ${c}`,
+        line: { color: PALETTE[colorIdx % PALETTE.length], dash: DASHES[ci % DASHES.length], width: 2 },
+        hovertemplate: `%{x:.3f} → %{y:.3f}<extra>${carLabel} · ${c}</extra>`,
+      });
+      colorIdx++;
+
+      tableRows.push({ car: carLabel, corner: c, kind,
+        B: coeffs.B?.toFixed(4)??"—", C: coeffs.C?.toFixed(4)??"—",
+        D: coeffs.D?.toFixed(4)??"—", E: coeffs.E?.toFixed(4)??"—",
+        stiff_at0: (coeffs.B*coeffs.C*coeffs.D)?.toFixed(3)??"—",
+      });
+    });
+  }
+
+  const anyPacejka = state.vehicles.some(v=>v.has_pacejka);
+  empty.style.display = anyPacejka ? "none" : "";
+
+  if (!traces.length) {
+    Plotly.newPlot(plot, [], {paper_bgcolor:"#0f1117",plot_bgcolor:"#0f1117",font:{color:"#dfe3ed",family:"'JetBrains Mono',monospace"},
+      annotations:[{text: anyPacejka ? "Select cars above" : "No Pacejka data loaded",
+        xref:"paper",yref:"paper",x:0.5,y:0.5,showarrow:false,
+        font:{size:16,color:"#8b98a5"}}]}, {responsive:true,displaylogo:false});
+    tblEl.innerHTML = "";
+    return;
+  }
+
+  Plotly.newPlot(plot, traces, {
+    paper_bgcolor:"#0f1117", plot_bgcolor:"#0f1117",
+    font:{color:"#dfe3ed", family:"'JetBrains Mono',monospace"},
+    margin:{l:60,r:20,t:30,b:50},
+    xaxis:{title: xLabel, gridcolor:"#252b3a", zerolinecolor:"#333b50", zeroline:true},
+    yaxis:{title: yLabel, gridcolor:"#252b3a", zerolinecolor:"#333b50", zeroline:true},
+    legend:{bgcolor:"rgba(0,0,0,0)", bordercolor:"#252b3a", borderwidth:1},
+    showlegend:true,
+    title:{text: isLat ? "Fy(α) — Lateral force  [Pacejka B/C/D/E]"
+                       : "Fx(κ) — Longitudinal force  [Pacejka B/C/D/E]",
+           font:{size:12,color:"#6e7a96"}},
+  }, {responsive:true, displaylogo:false});
+
+  tblEl.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:var(--panel2);">
+        ${["Car","Corner","B","C","D (peak)","E","Stiffness at 0"].map(h=>
+          `<th style="padding:5px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">${h}</th>`
+        ).join("")}
+      </tr></thead>
+      <tbody>
+        ${tableRows.map(r=>`<tr>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);">${r.car}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);">${r.corner}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;">${r.B}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;">${r.C}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;">${r.D}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;">${r.E}</td>
+          <td style="padding:4px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;">${r.stiff_at0}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function diffFilteredVehicles() {
+  const q    = (document.getElementById("diff-f-text")?.value  || "").toLowerCase().trim();
+  const make = document.getElementById("diff-f-make")?.value  || "";
+  const drv  = document.getElementById("diff-f-drive")?.value || "";
+  return state.vehicles.filter(v => {
+    if (make && v.make !== make)       return false;
+    if (drv  && v.drive_type !== drv)  return false;
+    if (q) {
+      const hay = `${v.make} ${v.model} ${v.year || ""} ${v.variant || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function populateDiffFilterDropdowns() {
+  const makeSel = document.getElementById("diff-f-make");
+  const drvSel  = document.getElementById("diff-f-drive");
+  const existingMakes = new Set([...makeSel.options].map(o => o.value).filter(Boolean));
+  const existingDrvs  = new Set([...drvSel.options].map(o => o.value).filter(Boolean));
+  [...new Set(state.vehicles.map(v => v.make).filter(Boolean))].sort().forEach(m => {
+    if (!existingMakes.has(m)) {
+      const o = document.createElement("option"); o.value = o.textContent = m; makeSel.appendChild(o);
+    }
+  });
+  [...new Set(state.vehicles.map(v => v.drive_type).filter(Boolean))].sort().forEach(d => {
+    if (!existingDrvs.has(d)) {
+      const o = document.createElement("option"); o.value = o.textContent = d; drvSel.appendChild(o);
+    }
+  });
+}
+
+function rebuildDiffPickers() {
+  populateDiffFilterDropdowns();
+  const filtered = diffFilteredVehicles();
+  const countEl = document.getElementById("diff-f-count");
+  if (countEl) {
+    countEl.textContent = filtered.length === state.vehicles.length
+      ? `${state.vehicles.length} car${state.vehicles.length !== 1 ? "s" : ""}`
+      : `${filtered.length} of ${state.vehicles.length} cars`;
+  }
+  ["diff-a","diff-b"].forEach(id => {
+    const sel = document.getElementById(id);
+    const val = sel.value;
+    sel.innerHTML = '<option value="">— select —</option>';
+    for (const v of filtered) {
+      const o = document.createElement("option");
+      o.value = v.source;
+      o.textContent = `${v.make} ${v.model} (${v.year ?? "?"})${v.variant ? " · "+v.variant : ""}  [${v.drive_type ?? "?"}]`;
+      sel.appendChild(o);
+    }
+    if (filtered.some(v => v.source === val)) sel.value = val;
+  });
+}
+
+function renderDiff() {
+  const srcA = document.getElementById("diff-a").value;
+  const srcB = document.getElementById("diff-b").value;
+  const body = document.getElementById("diff-body");
+  const empty = document.getElementById("empty-diff");
+  const engDiv = document.getElementById("diff-curves-engine");
+  const dampDiv = document.getElementById("diff-curves-damper");
+
+  if (!srcA || !srcB || srcA === srcB) {
+    body.innerHTML = "";
+    empty.style.display = "";
+    engDiv.style.display = "none";
+    dampDiv.style.display = "none";
+    return;
+  }
+  const a = state.vehicles.find(v => v.source === srcA);
+  const b = state.vehicles.find(v => v.source === srcB);
+  if (!a || !b) return;
+  empty.style.display = "none";
+
+  const sections = [
+    { title: "Identity", fields: [
+      {k:"make",h:"Make"}, {k:"model",h:"Model"}, {k:"year",h:"Year"},
+      {k:"variant",h:"Variant"}, {k:"drive_type",h:"Drive type"}, {k:"is_ev",h:"EV"},
+    ]},
+    { title: "Chassis", fields: [
+      {k:"mass_total_kg",h:"Mass (kg)",unit:"kg"},
+      {k:"wheelbase_m",h:"Wheelbase (m)",unit:"m"},
+      {k:"track_front_m",h:"Track F (m)",unit:"m"},
+      {k:"track_rear_m",h:"Track R (m)",unit:"m"},
+      {k:"cog_height_m",h:"CoG height (m)",unit:"m"},
+      {k:"front_weight_fraction",h:"F weight %",pct:true},
+      {k:"steering_type",h:"Steering"},
+      {k:"steering_ratio",h:"Steering ratio"},
+    ]},
+    { title: "Engine", fields: [
+      {k:"engine_configuration",h:"Config"},
+      {k:"engine_displacement_cc",h:"Displacement (cc)",unit:"cc"},
+      {k:"engine_idle_rpm",h:"Idle rpm",unit:"rpm"},
+      {k:"engine_max_rpm",h:"Max rpm",unit:"rpm"},
+      {k:"peak_torque_Nm",h:"Peak torque (Nm)",unit:"Nm"},
+      {k:"peak_torque_rpm",h:"Peak torque rpm",unit:"rpm"},
+      {k:"peak_power_kW",h:"Peak power (kW)",unit:"kW"},
+      {k:"peak_power_hp",h:"Peak power (hp)",unit:"hp"},
+      {k:"peak_power_rpm",h:"Peak power rpm",unit:"rpm"},
+    ]},
+    { title: "Powertrain", fields: [
+      {k:"gearbox_type",h:"Gearbox"},
+      {k:"gear_count",h:"Gears"},
+      {k:"final_drive",h:"Final drive"},
+      {k:"battery_kwh",h:"Battery (kWh)",unit:"kWh"},
+    ]},
+    { title: "Suspension", fields: [
+      {k:"topology_front",h:"Topology F"},
+      {k:"topology_rear",h:"Topology R"},
+      {k:"spring_rate_front_Nm",h:"Spring F (N/m)",unit:"N/m"},
+      {k:"spring_rate_rear_Nm",h:"Spring R (N/m)",unit:"N/m"},
+    ]},
+    { title: "Data quality", fields: [
+      {k:"completeness_pct",h:"Completeness",pct:true,already_pct:true},
+      {k:"estimated_corners",h:"Est. corners"},
+      {k:"data_confidence",h:"Confidence"},
+      {k:"spec_version",h:"SVJ version"},
+    ]},
+  ];
+
+  const fmtVal = (v, f) => {
+    if (v === null || v === undefined) return '<span style="color:var(--muted)">—</span>';
+    if (f.pct && !f.already_pct) return (v*100).toFixed(1)+"%";
+    if (f.already_pct) return v.toFixed(1)+"%";
+    if (typeof v === "boolean") return v ? "Yes" : "No";
+    if (typeof v === "number") return v.toFixed(v % 1 === 0 ? 0 : 3);
+    return v;
+  };
+
+  const fmtDelta = (va, vb, f) => {
+    if (typeof va !== "number" || typeof vb !== "number") {
+      return va === vb
+        ? '<span style="color:var(--muted)">equal</span>'
+        : `<span style="color:var(--warn)">differs</span>`;
+    }
+    const delta = vb - va;
+    const pct = va !== 0 ? (delta / Math.abs(va) * 100) : null;
+    const sign = delta > 0 ? "+" : "";
+    let d_str = f.already_pct
+      ? `${sign}${delta.toFixed(1)}%`
+      : `${sign}${delta.toFixed(delta % 1 === 0 ? 0 : 3)}${f.unit ? " "+f.unit : ""}`;
+    if (pct !== null) d_str += ` (${sign}${pct.toFixed(1)}%)`;
+    const color = delta === 0 ? "var(--muted)" : delta > 0 ? "var(--good)" : "var(--bad)";
+    return `<span style="color:${color}">${d_str}</span>`;
+  };
+
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:var(--panel2);">
+      <th style="padding:6px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">Field</th>
+      <th style="padding:6px 10px;text-align:left;color:var(--accent);border-bottom:1px solid var(--border);">A · ${a.make} ${a.model} (${a.year})</th>
+      <th style="padding:6px 10px;text-align:left;color:var(--blue);border-bottom:1px solid var(--border);">B · ${b.make} ${b.model} (${b.year})</th>
+      <th style="padding:6px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">Δ (B − A)</th>
+    </tr></thead><tbody>`;
+
+  for (const sec of sections) {
+    html += `<tr><td colspan="4" style="padding:8px 10px 4px;font-weight:600;color:var(--text);background:var(--panel);border-bottom:1px solid var(--border);">${sec.title}</td></tr>`;
+    for (const f of sec.fields) {
+      const va = a[f.k], vb = b[f.k];
+      const same = va === vb || (va === null && vb === null);
+      html += `<tr style="${same?"":"background:rgba(255,81,49,0.05)"}">
+        <td style="padding:5px 10px;color:var(--muted);border-bottom:1px solid var(--border);">${f.h}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid var(--border);">${fmtVal(va,f)}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid var(--border);">${fmtVal(vb,f)}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid var(--border);">${fmtDelta(va,vb,f)}</td>
+      </tr>`;
+    }
+  }
+  html += "</tbody></table>";
+  body.innerHTML = html;
+
+  let sus_html = `<div style="margin-top:14px;"><h2 style="font-size:14px;margin:0 0 8px 0;font-weight:600;">Per-corner suspension</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:var(--panel2);">
+      <th style="padding:6px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">Corner</th>
+      <th colspan="2" style="padding:6px 10px;text-align:left;color:var(--accent);border-bottom:1px solid var(--border);">A · ${a.make} ${a.model}</th>
+      <th colspan="2" style="padding:6px 10px;text-align:left;color:var(--blue);border-bottom:1px solid var(--border);">B · ${b.make} ${b.model}</th>
+    </tr></thead><tbody>`;
+  for (const c of CORNERS) {
+    const ca = a.corners[c], cb = b.corners[c];
+    sus_html += `<tr>
+      <td style="padding:5px 10px;font-weight:600;border-bottom:1px solid var(--border);">${c}</td>
+      <td style="padding:5px 10px;border-bottom:1px solid var(--border);color:var(--muted);">topo: ${ca.topology||"—"}<br>spring: ${ca.spring_rate_Nm ?? "—"} N/m</td>
+      <td style="padding:5px 10px;border-bottom:1px solid var(--border);color:var(--muted);">tire: ${a.tires_by_corner[c].label}</td>
+      <td style="padding:5px 10px;border-bottom:1px solid var(--border);color:var(--muted);">topo: ${cb.topology||"—"}<br>spring: ${cb.spring_rate_Nm ?? "—"} N/m</td>
+      <td style="padding:5px 10px;border-bottom:1px solid var(--border);color:var(--muted);">tire: ${b.tires_by_corner[c].label}</td>
+    </tr>`;
+  }
+  sus_html += "</tbody></table></div>";
+  body.insertAdjacentHTML("beforeend", sus_html);
+
+  const plotCfg = (bg) => ({paper_bgcolor:bg, plot_bgcolor:bg, font:{color:"#dfe3ed",family:"'JetBrains Mono',monospace"},
+    margin:{l:55,r:20,t:20,b:45}, showlegend:true,
+    legend:{bgcolor:"rgba(0,0,0,0)", bordercolor:"#252b3a", borderwidth:1},
+    xaxis:{gridcolor:"#252b3a",zerolinecolor:"#252b3a"},
+    yaxis:{gridcolor:"#252b3a",zerolinecolor:"#252b3a"},
+  });
+
+  const eng_traces = [];
+  if (a.torque_curve.length) eng_traces.push({x:a.torque_curve.map(p=>p[0]),y:a.torque_curve.map(p=>p[1]),name:`A Torque Nm`,mode:"lines",line:{color:"#ff5131"}});
+  if (a.power_curve.length)  eng_traces.push({x:a.power_curve.map(p=>p[0]),y:a.power_curve.map(p=>p[1]),name:`A Power kW`,mode:"lines",line:{color:"#ff5131",dash:"dot"}});
+  if (b.torque_curve.length) eng_traces.push({x:b.torque_curve.map(p=>p[0]),y:b.torque_curve.map(p=>p[1]),name:`B Torque Nm`,mode:"lines",line:{color:"#4d9fff"}});
+  if (b.power_curve.length)  eng_traces.push({x:b.power_curve.map(p=>p[0]),y:b.power_curve.map(p=>p[1]),name:`B Power kW`,mode:"lines",line:{color:"#4d9fff",dash:"dot"}});
+
+  if (eng_traces.length) {
+    engDiv.style.display = "";
+    Plotly.newPlot(engDiv, eng_traces, {...plotCfg("#1e2731"), xaxis:{...plotCfg("#1e2731").xaxis, title:"rpm"}, yaxis:{...plotCfg("#1e2731").yaxis, title:"Nm / kW"}}, {responsive:true, displaylogo:false});
+  } else { engDiv.style.display = "none"; }
+
+  const damp_traces = [];
+  const colors_a = ["#ff5131","#ff8c42","#f0b429","#34d27b"];
+  const colors_b = ["#4d9fff","#2dd4bf","#b06aff","#f0524f"];
+  CORNERS.forEach((c,i) => {
+    const ba = a.corners[c].damper_bump, bb = b.corners[c].damper_bump;
+    if (ba?.length) damp_traces.push({x:ba.map(p=>p[0]),y:ba.map(p=>p[1]),name:`A ${c} bump`,mode:"lines",line:{color:colors_a[i]}});
+    if (bb?.length) damp_traces.push({x:bb.map(p=>p[0]),y:bb.map(p=>p[1]),name:`B ${c} bump`,mode:"lines",line:{color:colors_b[i],dash:"dot"}});
+  });
+
+  if (damp_traces.length) {
+    dampDiv.style.display = "";
+    Plotly.newPlot(dampDiv, damp_traces, {...plotCfg("#1e2731"), xaxis:{...plotCfg("#1e2731").xaxis, title:"m/s"}, yaxis:{...plotCfg("#1e2731").yaxis, title:"N"}}, {responsive:true, displaylogo:false});
+  } else { dampDiv.style.display = "none"; }
+}
+
+function showDetail(v) {
+  switchTab("detail");
+  document.getElementById("detail-title").textContent =
+    `${v.make} ${v.model} (${v.year})${v.variant ? ' · '+v.variant : ''}`;
+  const sum = {
+    file: v.source, make: v.make, model: v.model, year: v.year,
+    variant: v.variant, drive: v.drive_type, ev: v.is_ev,
+    mass_kg: v.mass_total_kg, wheelbase_m: v.wheelbase_m,
+    track_F_m: v.track_front_m, track_R_m: v.track_rear_m,
+    cog_height_m: v.cog_height_m,
+    front_weight_pct: v.front_weight_fraction !== null ? (v.front_weight_fraction*100).toFixed(1)+"%" : null,
+    steering: v.steering_type, steering_ratio: v.steering_ratio,
+    peak_torque_Nm: v.peak_torque_Nm, peak_torque_rpm: v.peak_torque_rpm,
+    peak_power_kW: v.peak_power_kW, peak_power_hp: v.peak_power_hp,
+    engine_configuration: v.engine_configuration,
+    engine_displacement_cc: v.engine_displacement_cc,
+    engine_idle_rpm: v.engine_idle_rpm,
+    engine_max_rpm:  v.engine_max_rpm,
+    gearbox: v.gearbox_type, gears: v.gear_count, final_drive: v.final_drive,
+    battery_kWh: v.battery_kwh,
+    data_confidence: v.data_confidence, spec_version: v.spec_version,
+  };
+  document.getElementById("detail-sum").textContent = JSON.stringify(sum, null, 2);
+  const sus = {};
+  for (const c of CORNERS) {
+    sus[c] = {
+      topology: v.corners[c].topology,
+      spring: `${v.corners[c].spring_type || '?'} @ ${v.corners[c].spring_rate_Nm ?? '?'} N/m`,
+      damper: v.corners[c].damper_type,
+      brake:  `${v.corners[c].brake_disc_type || '?'} Ø${v.corners[c].brake_disc_mm?.toFixed?.(0) || '?'}mm`,
+      tire:   v.tires_by_corner[c].label,
+      estimated: v.corners[c].estimated || false,
+    };
+  }
+  document.getElementById("detail-sus").textContent = JSON.stringify(sus, null, 2);
+
+  const eng = [];
+  if (v.torque_curve.length) eng.push({
+    x: v.torque_curve.map(p=>p[0]), y: v.torque_curve.map(p=>p[1]),
+    name: "Torque (Nm)", mode:"lines+markers", yaxis:"y",
+  });
+  if (v.power_curve.length) eng.push({
+    x: v.power_curve.map(p=>p[0]), y: v.power_curve.map(p=>p[1]),
+    name: "Power (kW)", mode:"lines+markers", yaxis:"y2",
+  });
+  Plotly.newPlot("detail-engine", eng, {
+    paper_bgcolor:"#161a24", plot_bgcolor:"#161a24",
+    font:{color:"#dfe3ed", family:"'JetBrains Mono',monospace"}, margin:{l:50,r:50,t:10,b:40},
+    xaxis:{title:"rpm", gridcolor:"#252b3a"},
+    yaxis:{title:"Nm", gridcolor:"#252b3a"},
+    yaxis2:{title:"kW", overlaying:"y", side:"right", gridcolor:"transparent"},
+    showlegend:true, legend:{bgcolor:"rgba(0,0,0,0)"},
+  }, {responsive:true, displaylogo:false});
+
+  const damp = [];
+  for (const c of CORNERS) {
+    const b = v.corners[c].damper_bump, r = v.corners[c].damper_rebound;
+    if (b?.length) damp.push({x:b.map(p=>p[0]),y:b.map(p=>p[1]),name:`${c} bump`,mode:"lines+markers"});
+    if (r?.length) damp.push({x:r.map(p=>p[0]),y:r.map(p=>p[1]),name:`${c} rebound`,mode:"lines+markers",line:{dash:"dot"}});
+  }
+  Plotly.newPlot("detail-damper", damp, {
+    paper_bgcolor:"#161a24", plot_bgcolor:"#161a24",
+    font:{color:"#dfe3ed", family:"'JetBrains Mono',monospace"}, margin:{l:50,r:20,t:10,b:40},
+    xaxis:{title:"m/s", gridcolor:"#252b3a"},
+    yaxis:{title:"N", gridcolor:"#252b3a"},
+    showlegend:true, legend:{bgcolor:"rgba(0,0,0,0)"},
+  }, {responsive:true, displaylogo:false});
+}
+
+// -----------------------------------------------------------------------
+// Completeness Heatmap — per-car × per-subtree fill rate
+// -----------------------------------------------------------------------
+
+function _hmFraction(vals) {
+  const total = vals.length;
+  if (!total) return null;
+  const present = vals.filter(x => x !== null && x !== undefined && x !== "" && x !== "?").length;
+  return present / total;
+}
+
+// Each group: key, label, tooltip, scorer fn (vehicle → 0..1 | null)
+const HEATMAP_GROUPS = [
+  {
+    k: "identity",   label: "Identity",
+    tip: "make, model, year, drive type",
+    fn: v => _hmFraction([v.make, v.model, v.year, v.drive_type]),
+  },
+  {
+    k: "chassis",    label: "Chassis",
+    tip: "mass, wheelbase, track F/R, CoG height, front weight %",
+    fn: v => _hmFraction([v.mass_total_kg, v.wheelbase_m, v.track_front_m,
+                           v.track_rear_m, v.cog_height_m, v.front_weight_fraction]),
+  },
+  {
+    k: "engine",     label: "Engine",
+    tip: "config, displacement, idle rpm, max rpm, peak torque, peak power",
+    fn: v => _hmFraction([v.engine_configuration, v.engine_displacement_cc,
+                           v.engine_idle_rpm, v.engine_max_rpm,
+                           v.peak_torque_Nm, v.peak_power_kW]),
+  },
+  {
+    k: "curves",     label: "Curves",
+    tip: "torque curve present",
+    fn: v => (v.torque_curve?.length > 0 ? 1 : 0),
+  },
+  {
+    k: "suspension", label: "Suspension",
+    tip: "topology + spring rate, all 4 corners",
+    fn: v => _hmFraction(CORNERS.flatMap(c => [v.corners[c]?.topology, v.corners[c]?.spring_rate_Nm])),
+  },
+  {
+    k: "dampers",    label: "Dampers",
+    tip: "bump curve present, per corner",
+    fn: v => CORNERS.filter(c => v.corners[c]?.damper_bump?.length > 0).length / 4,
+  },
+  {
+    k: "tires",      label: "Tires",
+    tip: "rim diameter present, per corner",
+    fn: v => CORNERS.filter(c => v.tires_by_corner[c]?.rim_diameter_mm != null).length / 4,
+  },
+  {
+    k: "drivetrain", label: "Drivetrain",
+    tip: "gearbox type, gear count, final drive",
+    fn: v => _hmFraction([v.gearbox_type, v.gear_count, v.final_drive]),
+  },
+  {
+    k: "brakes",     label: "Brakes",
+    tip: "brake disc diameter, per corner",
+    fn: v => CORNERS.filter(c => v.corners[c]?.brake_disc_mm != null).length / 4,
+  },
+];
+
+function _hmCellStyle(pct) {
+  // returns { bg, fg, txt }
+  if (pct === null) return { bg: "var(--panel3)", fg: "var(--dim)", txt: "—" };
+  const p = Math.round(pct * 100);
+  let bg, fg;
+  if (pct >= 1.0)        { bg = "rgba(52,210,123,0.35)"; fg = "var(--good)"; }
+  else if (pct >= 0.75)  { bg = "rgba(52,210,123,0.18)"; fg = "#7bcca0"; }
+  else if (pct >= 0.5)   { bg = "rgba(255,191,0,0.25)";  fg = "var(--warn)"; }
+  else if (pct >= 0.25)  { bg = "rgba(240,140,0,0.28)";  fg = "#e08030"; }
+  else                   { bg = "rgba(240,82,79,0.32)";   fg = "var(--bad)"; }
+  return { bg, fg, txt: p + "%" };
+}
+
+function renderHeatmap() {
+  const el    = document.getElementById("hmTable");
+  const empty = document.getElementById("empty-heatmap");
+  if (!el) return;
+  if (!state.vehicles.length) {
+    el.innerHTML = "";
+    if (empty) empty.style.display = "";
+    return;
+  }
+  if (empty) empty.style.display = "none";
+
+  // Score every vehicle
+  const rows = state.vehicles.map(v => {
+    const scores = {};
+    HEATMAP_GROUPS.forEach(g => {
+      try { scores[g.k] = g.fn(v); } catch(_) { scores[g.k] = 0; }
+    });
+    const vals = Object.values(scores).filter(x => x !== null);
+    scores._overall = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    return { v, scores, label: `${v.make} ${v.model} (${v.year ?? "?"})` };
+  });
+
+  // Sort
+  const { k: sk, dir: sd } = state.hmSort;
+  rows.sort((a, b) => {
+    if (sk === "label" || !sk) return a.label.localeCompare(b.label) * sd;
+    const av = sk === "overall" ? a.scores._overall : a.scores[sk];
+    const bv = sk === "overall" ? b.scores._overall : b.scores[sk];
+    if (av === null && bv === null) return 0;
+    if (av === null) return sd;
+    if (bv === null) return -sd;
+    return (av - bv) * sd;
+  });
+
+  const thBase = "padding:7px 10px;text-align:center;color:var(--muted);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;font-size:10px;letter-spacing:.4px;text-transform:uppercase;";
+  const sortArrow = (k) => state.hmSort.k === k ? (state.hmSort.dir > 0 ? " ▲" : " ▼") : "";
+  const thActive = (k) => state.hmSort.k === k ? "color:var(--accent);" : "";
+
+  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%;">
+    <thead><tr style="background:var(--panel2);">
+      <th style="${thBase}text-align:left;${thActive("label")}position:sticky;left:0;background:var(--panel2);z-index:3;"
+          onclick="window.hmSetSort('label')">Car${sortArrow("label")}</th>
+      <th style="${thBase}${thActive("overall")}" onclick="window.hmSetSort('overall')" title="Mean of all groups">Overall${sortArrow("overall")}</th>`;
+  HEATMAP_GROUPS.forEach(g => {
+    html += `<th style="${thBase}${thActive(g.k)}" onclick="window.hmSetSort('${g.k}')" title="${g.tip}">${g.label}${sortArrow(g.k)}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  rows.forEach(row => {
+    const ov = _hmCellStyle(row.scores._overall);
+    html += `<tr>
+      <td style="padding:4px 12px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;left:0;background:var(--panel);z-index:1;">${row.label}</td>
+      <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;background:${ov.bg};color:${ov.fg};">${ov.txt}</td>`;
+    HEATMAP_GROUPS.forEach(g => {
+      const c = _hmCellStyle(row.scores[g.k]);
+      html += `<td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;background:${c.bg};color:${c.fg};" title="${g.tip}: ${c.txt}">${c.txt}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
+window.hmSetSort = function(k) {
+  if (state.hmSort.k === k) {
+    state.hmSort.dir *= -1;
+  } else {
+    state.hmSort.k = k;
+    // Default: Overall → descending (best first), others → ascending (worst first → easier QA)
+    state.hmSort.dir = (k === "overall" || k === "label") ? -1 : 1;
+  }
+  renderHeatmap();
+};
+
+// -----------------------------------------------------------------------
+// Handling Fingerprint — 8-axis normalised radar chart
+// -----------------------------------------------------------------------
+
+/** Linear interpolation of a sorted [[x,y],…] curve at query point qx. */
+function interpCurve(pts, qx) {
+  if (!pts || !pts.length) return null;
+  if (qx <= pts[0][0]) return pts[0][1];
+  if (qx >= pts[pts.length-1][0]) return pts[pts.length-1][1];
+  for (let i = 1; i < pts.length; i++) {
+    if (pts[i][0] >= qx) {
+      const t = (qx - pts[i-1][0]) / (pts[i][0] - pts[i-1][0]);
+      return pts[i-1][1] + t * (pts[i][1] - pts[i-1][1]);
+    }
+  }
+  return null;
+}
+
+/**
+ * 8 fingerprint dimensions.  invert:true means lower raw value → higher normalised
+ * score (i.e. outer rim of radar = desirable direction for that axis).
+ */
+const FP_DIMS = [
+  {
+    k: "mass", label: "Mass\n(light→)", invert: true,
+    fn: v => v.mass_total_kg,
+  },
+  {
+    k: "balance", label: "F/R\nbalance", invert: false,
+    // 1 = perfect 50/50, 0 = fully front- or rear-biased
+    fn: v => v.front_weight_fraction !== null
+      ? 1 - 2 * Math.abs(v.front_weight_fraction - 0.5)
+      : null,
+  },
+  {
+    k: "cog", label: "CoG\n(low→)", invert: true,
+    fn: v => v.cog_height_m,
+  },
+  {
+    k: "contact", label: "Contact\npatch", invert: false,
+    // average rim width across all corners that have data (proxy for grip width)
+    fn: v => {
+      const ws = CORNERS.map(c => v.tires_by_corner[c]?.rim_width_mm).filter(x => x != null);
+      return ws.length ? ws.reduce((a, b) => a + b, 0) / ws.length : null;
+    },
+  },
+  {
+    k: "spring_f", label: "Spring F\n(N/m)", invert: false,
+    fn: v => v.spring_rate_front_Nm,
+  },
+  {
+    k: "spring_r", label: "Spring R\n(N/m)", invert: false,
+    fn: v => v.spring_rate_rear_Nm,
+  },
+  {
+    k: "damper", label: "Damper\n@0.2 m/s", invert: false,
+    // average bump force at 0.2 m/s across all corners that have a curve
+    fn: v => {
+      const vals = CORNERS.map(c => {
+        const pts = v.corners[c]?.damper_bump;
+        return (pts?.length) ? interpCurve(pts, 0.2) : null;
+      }).filter(x => x !== null);
+      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    },
+  },
+  {
+    k: "torque", label: "Torque\n@4000 rpm", invert: false,
+    fn: v => v.torque_curve?.length ? interpCurve(v.torque_curve, 4000) : null,
+  },
+  {
+    k: "pw_ratio", label: "Power/weight\n(kW/t)", invert: false,
+    fn: v => (v.peak_power_kW != null && v.mass_total_kg)
+      ? v.peak_power_kW / (v.mass_total_kg / 1000) : null,
+  },
+];
+
+function _percentile(arr, p) {
+  if (!arr.length) return null;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const idx = p / 100 * (sorted.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+/** Compute {p5, p95} for each FP_DIMS key across the whole library. */
+function computeFpNorms(vehicles) {
+  const norms = {};
+  for (const dim of FP_DIMS) {
+    const vals = vehicles.map(v => dim.fn(v)).filter(x => x !== null && !isNaN(x));
+    if (!vals.length) { norms[dim.k] = null; continue; }
+    const p5  = _percentile(vals, 5);
+    const p95 = _percentile(vals, 95);
+    norms[dim.k] = { p5, p95 };
+  }
+  return norms;
+}
+
+/**
+ * Return an array of 8 normalised [0,1] values for vehicle v.
+ * null where data is missing.
+ */
+function fpVehicleValues(v, norms) {
+  return FP_DIMS.map(dim => {
+    const raw = dim.fn(v);
+    if (raw === null || raw === undefined || isNaN(raw)) return null;
+    const n = norms[dim.k];
+    if (!n || n.p5 === n.p95) return null;
+    let norm = (raw - n.p5) / (n.p95 - n.p5);
+    norm = Math.max(0, Math.min(1, norm));
+    return dim.invert ? 1 - norm : norm;
+  });
+}
+
+const FP_PALETTE = [
+  { line: "#ff5131", fill: "rgba(255,81,49,0.10)"   },
+  { line: "#4d9fff", fill: "rgba(77,159,255,0.10)"  },
+  { line: "#34d27b", fill: "rgba(52,210,123,0.10)"  },
+  { line: "#f0b429", fill: "rgba(240,180,41,0.10)"  },
+  { line: "#b06aff", fill: "rgba(176,106,255,0.10)" },
+  { line: "#2dd4bf", fill: "rgba(45,212,191,0.10)"  },
+  { line: "#ff8c42", fill: "rgba(255,140,66,0.10)"  },
+  { line: "#f0524f", fill: "rgba(240,82,79,0.10)"   },
+  { line: "#e040fb", fill: "rgba(224,64,251,0.10)"  },
+  { line: "#00bcd4", fill: "rgba(0,188,212,0.10)"   },
+];
+
+function rebuildFpPicker() {
+  const picker = document.getElementById("fpCarPicker");
+  if (!picker) return;
+  picker.innerHTML = "";
+  for (const v of state.vehicles) {
+    const label = `${v.make} ${v.model} (${v.year ?? "?"})`;
+    const pill = document.createElement("div");
+    pill.className = "car-pill" + (state.fpSelected.has(v.source) ? " on" : "");
+    pill.textContent = label;
+    pill.addEventListener("click", () => {
+      if (state.fpSelected.has(v.source)) state.fpSelected.delete(v.source);
+      else state.fpSelected.add(v.source);
+      rebuildFpPicker();
+      renderFingerprint();
+    });
+    picker.appendChild(pill);
+  }
+}
+
+function renderFingerprint() {
+  const plot = document.getElementById("fpPlot");
+  const tbl  = document.getElementById("fpTable");
+  if (!plot) return;
+
+  if (!state.vehicles.length) {
+    Plotly.newPlot(plot, [], {
+      paper_bgcolor: "#0f1117", plot_bgcolor: "#0f1117",
+      font: { color: "#dfe3ed" },
+      annotations: [{ text: "No vehicles loaded", xref:"paper", yref:"paper",
+        x: 0.5, y: 0.5, showarrow: false, font: { size: 16, color: "#8b98a5" } }],
+    }, { responsive: true, displaylogo: false });
+    if (tbl) tbl.innerHTML = "";
+    return;
+  }
+
+  const norms = computeFpNorms(state.vehicles);
+  const dimLabels = FP_DIMS.map(d => d.label);
+
+  const traces = [];
+  const tableRows = [];
+  let ci = 0;
+
+  for (const v of state.vehicles) {
+    if (!state.fpSelected.has(v.source)) continue;
+    const vals  = fpVehicleValues(v, norms);
+    const label = `${v.make} ${v.model} (${v.year ?? "?"})`;
+    const pal   = FP_PALETTE[ci % FP_PALETTE.length];
+    ci++;
+
+    // Close the polygon by repeating the first value
+    const r      = [...vals.map(x => x ?? 0), vals[0] ?? 0];
+    const theta  = [...dimLabels, dimLabels[0]];
+
+    traces.push({
+      type: "scatterpolar",
+      r, theta,
+      fill: "toself",
+      fillcolor: pal.fill,
+      line: { color: pal.line, width: 2 },
+      name: label,
+      hovertemplate: "%{theta}: %{r:.2f}<extra>" + label + "</extra>",
+    });
+
+    tableRows.push({ label, vals, color: pal.line });
+  }
+
+  const anySelected = state.vehicles.some(v => state.fpSelected.has(v.source));
+
+  Plotly.newPlot(plot, traces, {
+    paper_bgcolor: "#0f1117",
+    plot_bgcolor:  "#0f1117",
+    font: { color: "#dfe3ed", family: "'JetBrains Mono',monospace", size: 11 },
+    margin: { l: 80, r: 80, t: 60, b: 80 },
+    polar: {
+      bgcolor: "#0f1117",
+      radialaxis: {
+        visible: true,
+        range: [0, 1],
+        gridcolor: "#252b3a",
+        linecolor: "#252b3a",
+        tickfont: { size: 9, color: "#6e7a96" },
+        tickvals: [0, 0.25, 0.5, 0.75, 1.0],
+        ticktext: ["0", "25%", "50%", "75%", "100%"],
+      },
+      angularaxis: {
+        gridcolor: "#333b50",
+        linecolor: "#333b50",
+        tickfont:  { size: 11, color: "#aab4c8" },
+      },
+    },
+    showlegend: true,
+    legend: {
+      bgcolor: "rgba(0,0,0,0)", bordercolor: "#252b3a", borderwidth: 1,
+      font: { size: 10 },
+    },
+    title: {
+      text: anySelected
+        ? "Handling Fingerprint  ·  normalised to library 5th–95th percentile"
+        : "Select cars above",
+      font: { size: 11, color: "#6e7a96" },
+    },
+  }, { responsive: true, displaylogo: false });
+
+  // Raw-values table below the chart
+  if (!tbl) return;
+  if (!tableRows.length) { tbl.innerHTML = ""; return; }
+
+  const pctStr = (x) => x === null ? "—" : (x * 100).toFixed(0) + "%";
+  const cellColor = (x) => x === null   ? "color:var(--muted)"
+                          : x >= 0.75   ? "color:var(--good)"
+                          : x <= 0.25   ? "color:var(--bad)"
+                          : "color:var(--text)";
+
+  let h = `<div style="overflow-x:auto;margin-top:16px;">
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+    <thead><tr style="background:var(--panel2);">
+      <th style="padding:5px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);">Car</th>`;
+  for (const d of FP_DIMS) {
+    h += `<th style="padding:5px 10px;text-align:right;color:var(--muted);border-bottom:1px solid var(--border);white-space:pre;">${d.label}</th>`;
+  }
+  h += `</tr></thead><tbody>`;
+  for (const row of tableRows) {
+    h += `<tr><td style="padding:4px 10px;border-bottom:1px solid var(--border);color:${row.color};white-space:nowrap;">${row.label}</td>`;
+    for (let i = 0; i < FP_DIMS.length; i++) {
+      h += `<td style="padding:4px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;${cellColor(row.vals[i])}">${pctStr(row.vals[i])}</td>`;
+    }
+    h += `</tr>`;
+  }
+  h += `</tbody></table></div>`;
+  tbl.innerHTML = h;
+}
+
+// ----------------------------------------------------------------------
+// File ingest + tabs + CSV export
+// ----------------------------------------------------------------------
+function switchTab(t) {
+  state.tab = t;
+  document.querySelectorAll(".tab").forEach(el =>
+    el.classList.toggle("active", el.dataset.tab === t));
+  document.querySelectorAll(".tab-pane").forEach(el =>
+    el.style.display = el.id === "pane-"+t ? "" : "none");
+  if (t === "curves")      { rebuildCarPicker();      renderCurves(); }
+  if (t === "diff")        { rebuildDiffPickers();   renderDiff(); }
+  if (t === "pacejka")     { rebuildPacejkaPicker(); renderPacejka(); }
+  if (t === "fingerprint") { rebuildFpPicker();      renderFingerprint(); }
+  if (t === "heatmap")     { renderHeatmap(); }
+}
+
+async function expandZip(zipFile) {
+  if (!window.JSZip) throw new Error("JSZip not loaded");
+  const zip = await JSZip.loadAsync(zipFile);
+  const out = [];
+  const prefix = zipFile.name + "!/";
+  for (const [relPath, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    if (!/\.svj\.json$/i.test(relPath) && !/\.json$/i.test(relPath)) continue;
+    out.push({
+      name: relPath.split("/").pop(),
+      path: prefix + relPath,
+      text: async () => await entry.async("string"),
+    });
+  }
+  return out;
+}
+
+async function ingestFiles(fileList) {
+  const raw = [...fileList];
+  const zips    = raw.filter(f => /\.zip$/i.test(f.name));
+  const jsonish = raw.filter(f => /\.svj\.json$/i.test(f.name) || /\.json$/i.test(f.name));
+
+  const zipErrors = [];
+  const fromZips = [];
+  for (const z of zips) {
+    try {
+      const entries = await expandZip(z);
+      fromZips.push(...entries);
+    } catch (e) {
+      zipErrors.push({file: z.name, error: `zip: ${e.message}`});
+    }
+  }
+
+  const fromFiles = jsonish.map(f => ({
+    name: f.name,
+    path: f.webkitRelativePath || f.name,
+    text: () => f.text(),
+  }));
+
+  const all = [...fromFiles, ...fromZips];
+  if (!all.length && !zipErrors.length) {
+    document.getElementById("err-area").textContent =
+      "No .svj.json files found (dropped items: " + raw.length + ").";
+    return;
+  }
+
+  const vehicles = [], errors = [...zipErrors];
+  for (const vf of all) {
+    try {
+      const txt = await vf.text();
+      const doc = JSON.parse(txt);
+      if (!doc._metadata || !doc.vehicle_info) {
+        errors.push({file: vf.path, error: "not an SVJ document"}); continue;
+      }
+      vehicles.push(summarize(doc, vf.path));
+    } catch (e) {
+      errors.push({file: vf.path, error: e.message});
+    }
+  }
+  state.vehicles = vehicles;
+  state.tires = buildTireCatalogue(vehicles);
+  state.errors = errors;
+  state.selected   = new Set(vehicles.map(v => v.source));
+  state.pjSelected = new Set(vehicles.filter(v => v.has_pacejka).map(v => v.source));
+  state.fpSelected = new Set(vehicles.map(v => v.source));
+  renderIndex();
+  renderTires();
+  rebuildDiffPickers();
+  rebuildPacejkaPicker();
+  if (state.tab === "curves")   { rebuildCarPicker(); renderCurves(); }
+  if (state.tab === "heatmap")  { renderHeatmap(); }
+  const errEl = document.getElementById("err-area");
+  if (errors.length) {
+    errEl.innerHTML = `<b>${errors.length}</b> issue${errors.length>1?"s":""}: ` +
+      errors.slice(0,10).map(e => `${e.file}: ${e.error}`).join(" · ") +
+      (errors.length > 10 ? ` …(+${errors.length-10} more)` : "");
+  } else {
+    errEl.innerHTML = "";
+  }
+}
+
+function exportCSV() {
+  const rows = applyFilters(state.vehicles.slice());
+  const cols = COLS.map(c => c.k);
+  const out = [COLS.map(c=>c.h).join(",")];
+  for (const v of rows) {
+    out.push(cols.map(k => {
+      let val = v[k];
+      if (val === null || val === undefined) return "";
+      if (typeof val === "string" && (val.includes(",") || val.includes('"')))
+        return '"' + val.replace(/"/g,'""') + '"';
+      return val;
+    }).join(","));
+  }
+  const blob = new Blob([out.join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "svj_library_index.csv";
+  a.click();
+}
+
+// Wire up
+document.addEventListener("DOMContentLoaded", () => {
+  buildHead();
+  document.getElementById("folderInput").addEventListener("change",
+    e => ingestFiles(e.target.files));
+  document.getElementById("fileInput").addEventListener("change",
+    e => ingestFiles(e.target.files));
+  document.getElementById("btnPickFolder").addEventListener("click",
+    e => { e.preventDefault(); document.getElementById("folderInput").click(); });
+  document.getElementById("btnPickFiles").addEventListener("click",
+    e => { e.preventDefault(); document.getElementById("fileInput").click(); });
+
+  const dz = document.getElementById("dz");
+  ["dragenter","dragover"].forEach(t => dz.addEventListener(t, e => {
+    e.preventDefault(); dz.classList.add("drag");
+  }));
+  ["dragleave","drop"].forEach(t => dz.addEventListener(t, e => {
+    e.preventDefault(); dz.classList.remove("drag");
+  }));
+  dz.addEventListener("drop", async e => {
+    const items = e.dataTransfer.items;
+    if (items && items.length && items[0].webkitGetAsEntry) {
+      const files = [];
+      const walk = async (entry, path) => {
+        if (entry.isFile) {
+          files.push(await new Promise(r => entry.file(f => {
+            f.webkitRelativePath = path + f.name; r(f);
+          })));
+        } else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          let batch;
+          do {
+            batch = await new Promise(r => reader.readEntries(r));
+            for (const en of batch) await walk(en, path + entry.name + "/");
+          } while (batch.length);
+        }
+      };
+      for (const it of items) {
+        const en = it.webkitGetAsEntry();
+        if (en) await walk(en, "");
+      }
+      ingestFiles(files);
+    } else {
+      ingestFiles(e.dataTransfer.files);
+    }
+  });
+  document.querySelectorAll(".tab").forEach(t =>
+    t.addEventListener("click", () => switchTab(t.dataset.tab)));
+  ["f-text","f-drive","f-topo","f-ev"].forEach(id =>
+    document.getElementById(id).addEventListener("input", renderIndex));
+  ["f-tire","f-tire-rim"].forEach(id =>
+    document.getElementById(id).addEventListener("input", renderTires));
+  document.getElementById("b-export-csv").addEventListener("click", exportCSV);
+  document.getElementById("curveKind").addEventListener("change", renderCurves);
+  document.getElementById("curveCorner").addEventListener("change", renderCurves);
+  document.getElementById("b-all").addEventListener("click", () => {
+    state.selected = new Set(state.vehicles.map(v => v.source));
+    rebuildCarPicker(); renderCurves();
+  });
+  document.getElementById("b-none").addEventListener("click", () => {
+    state.selected.clear(); rebuildCarPicker(); renderCurves();
+  });
+  // Pacejka tab
+  document.getElementById("pj-kind").addEventListener("change",   renderPacejka);
+  document.getElementById("pj-corner").addEventListener("change", renderPacejka);
+  document.getElementById("pj-f-make").addEventListener("change", () => { rebuildPacejkaPicker(); renderPacejka(); });
+  document.getElementById("pj-f-rim").addEventListener("change",  () => { rebuildPacejkaPicker(); renderPacejka(); });
+  document.getElementById("pj-all").addEventListener("click", () => {
+    state.pjSelected = new Set(pjFilteredVehicles().map(v=>v.source));
+    rebuildPacejkaPicker(); renderPacejka();
+  });
+  document.getElementById("pj-none").addEventListener("click", () => {
+    state.pjSelected.clear(); rebuildPacejkaPicker(); renderPacejka();
+  });
+  // Tires size filters
+  ["f-tire-width","f-tire-radius"].forEach(id =>
+    document.getElementById(id).addEventListener("change", renderTires));
+  // Diff tab
+  document.getElementById("diff-a").addEventListener("change", renderDiff);
+  document.getElementById("diff-b").addEventListener("change", renderDiff);
+  ["diff-f-text","diff-f-make","diff-f-drive"].forEach(id =>
+    document.getElementById(id).addEventListener("input", () => { rebuildDiffPickers(); renderDiff(); })
+  );
+  document.getElementById("diff-f-clear").addEventListener("click", () => {
+    document.getElementById("diff-f-text").value  = "";
+    document.getElementById("diff-f-make").value  = "";
+    document.getElementById("diff-f-drive").value = "";
+    rebuildDiffPickers();
+    renderDiff();
+  });
+  // Fingerprint tab
+  document.getElementById("fp-all").addEventListener("click", () => {
+    state.fpSelected = new Set(state.vehicles.map(v => v.source));
+    rebuildFpPicker(); renderFingerprint();
+  });
+  document.getElementById("fp-none").addEventListener("click", () => {
+    state.fpSelected.clear(); rebuildFpPicker(); renderFingerprint();
+  });
+});
+</script>
+</body>
+</html>

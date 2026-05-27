@@ -1,0 +1,28 @@
+svj-analyze
+Copyright 2026 RFloEng
+
+This product includes software developed by RFloEng
+(https://github.com/RFloEng).
+
+---------------------------------------------------------------------
+
+This software depends on or bundles the following third-party components:
+
+* openpyxl (MIT-ish, see https://openpyxl.readthedocs.io/en/stable/)
+  — Python dependency used by svj_analyze.py to write the XLSX workbook.
+  Not redistributed; installed via pip.
+
+* Plotly.js (MIT, see https://github.com/plotly/plotly.js)
+  — Loaded at runtime from a CDN by svj_library_browser.html.
+  Not redistributed; referenced via <script src="…"> tag.
+
+* JSZip (MIT/GPL dual, see https://github.com/Stuk/jszip)
+  — Loaded at runtime from a CDN by svj_library_browser.html for zip
+  extraction. Not redistributed; referenced via <script src="…"> tag.
+
+---------------------------------------------------------------------
+
+The example SVJ vehicle files referenced in MANUAL.md and
+DEVELOPMENT_BRIEF.md belong to the parent SVJ-standard-vehicle-json
+repository (https://github.com/RFloEng/SVJ-standard-vehicle-json) and
+are governed by that repository's license.
