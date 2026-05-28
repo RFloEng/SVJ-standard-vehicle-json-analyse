@@ -344,7 +344,8 @@
       </div>
       <div class="car-picker" id="pjCarPicker" style="margin-bottom:10px;"></div>
       <div class="empty" id="empty-pacejka" style="display:none;">No Pacejka coefficients found in loaded vehicles.
-        <br><span style="font-size:11px;color:var(--muted);">SVJ path: <code>suspension.{corner}.tire.pacejka.{lat|lon}.{B,C,D,E}</code></span></div>
+        <br><span style="font-size:11px;color:var(--muted);">SVJ path: <code>suspension.{corner}.tire.pacejka.{lat|lon}.{B,C,D,E}</code>
+        or <code>tires.sets.&lt;set_ref&gt;.pacejka_mf52.{lateral|longitudinal}</code> (AC→SVJ)</span></div>
       <div id="pjPlot" style="width:100%;height:65vh;"></div>
       <div id="pjTable" style="margin-top:14px;overflow-x:auto;font-size:11px;"></div>
     </div>
@@ -497,7 +498,25 @@ function summarize(doc, source) {
     const w = co.wheel || {};
     const sp = co.spring || {}, da = co.damper || {}, br = co.brake || {};
     const disc = br.disc || {};
-    const key = tireKey(w);
+    // Prefer tires.sets data when set_ref is present (AC→SVJ converter pattern:
+    // wheel.rim_diameter is hardcoded 0.432 placeholder; real data is in tires.sets)
+    const srefW = w.set_ref || (co.tire || {}).set_ref;
+    let effW = w;
+    if (srefW) {
+      const ts = doc.tires?.sets?.[srefW];
+      if (ts) {
+        const rim  = ts.rim  || {};
+        const dims = ts.dimensions || {};
+        const od   = dims.overall_diameter;
+        effW = {
+          rim_diameter: rim.diameter  ?? w.rim_diameter,
+          rim_width:    rim.width_nominal ?? w.rim_width,
+          loaded_radius: w.loaded_radius ?? (od != null ? od / 2 : null),
+          mass: w.mass,
+        };
+      }
+    }
+    const key = tireKey(effW);
     tires[c] = {
       key, label: tireLabel(key),
       rim_diameter_mm: key ? key[0] : null,
@@ -519,7 +538,7 @@ function summarize(doc, source) {
     };
     if (corners[c].estimated) est_corners++;
 
-    // Pacejka coefficients — try tire.pacejka or tile.magic_formula
+    // Pacejka — try inline tire.pacejka / tire.magic_formula first
     const tire_block = co.tire || {};
     const pj_block   = tire_block.pacejka || tire_block.magic_formula || null;
     if (pj_block) {
@@ -533,6 +552,33 @@ function summarize(doc, source) {
       const lon = normCoeffs(pj_block.lon ?? pj_block.longitudinal ?? pj_block.fx ?? null);
       const mz  = normCoeffs(pj_block.mz ?? pj_block.aligning ?? null);
       if (lat || lon || mz) corners[c].pacejka = { lat, lon, mz };
+    }
+    // Fallback: AC→SVJ format stores Pacejka in tires.sets.<set_ref>.pacejka_mf52
+    // using MF6.2 p-coefficients; map to approximate B/C/D/E for plotting
+    if (!corners[c].pacejka) {
+      if (srefW) {
+        const ts  = doc.tires?.sets?.[srefW];
+        const mf  = ts?.pacejka_mf52 || ts?.pacejka;
+        if (mf) {
+          // MF6.2 → pseudo B/C/D/E at reference load (single-point approximation)
+          // C = pCy1/pCx1,  D = pDy1/pDx1,  B = pKy1/(C×D),  E = pEy1/pEx1
+          const mf6ToBCDE = (obj, lat) => {
+            if (!obj) return null;
+            const pC = num(lat ? obj.pCy1 : obj.pCx1);
+            const pD = num(lat ? obj.pDy1 : obj.pDx1);
+            const pK = num(lat ? obj.pKy1 : obj.pKx1);
+            const pE = num(lat ? obj.pEy1 : obj.pEx1);
+            if (pC === null && pD === null) return null;
+            const C = pC, D = pD, E = pE;
+            const B = (pK !== null && C !== null && D !== null && C * D !== 0)
+              ? pK / (C * D) : null;
+            return (B !== null || C !== null || D !== null) ? {B, C, D, E} : null;
+          };
+          const lat2 = mf6ToBCDE(mf.lateral,      true);
+          const lon2 = mf6ToBCDE(mf.longitudinal,  false);
+          if (lat2 || lon2) corners[c].pacejka = { lat: lat2, lon: lon2, mz: null };
+        }
+      }
     }
   }
 

@@ -208,13 +208,39 @@ def _interp_curve(pts: list, qx: float) -> float | None:
     return None
 
 
-def _tire_key(wheel: dict) -> tuple | None:
-    """Identity of a tire footprint: (rim_diam_mm, rim_width_mm, loaded_r_mm)."""
+def _tire_key(wheel: dict, tires_sets: dict | None = None) -> tuple | None:
+    """Identity of a tire footprint: (rim_diam_mm, rim_width_mm, loaded_r_mm).
+
+    When *tires_sets* is supplied and the wheel carries a *set_ref*, values from
+    ``tires.sets.<set_ref>`` take precedence over the wheel block.  This is needed
+    for AC→SVJ files where ``wheel.rim_diameter`` is hardcoded to a placeholder
+    (0.432 m) and the authoritative rim data lives in ``tires.sets``.
+    """
     if not isinstance(wheel, dict):
         return None
     rd = _num(wheel.get("rim_diameter"))
     rw = _num(wheel.get("rim_width"))
     lr = _num(wheel.get("loaded_radius"))
+    # Prefer tires.sets data when set_ref is available (AC→SVJ converter pattern)
+    if tires_sets:
+        sref = wheel.get("set_ref")
+        if sref:
+            ts = tires_sets.get(sref) or {}
+            rim = ts.get("rim") or {}
+            dims = ts.get("dimensions") or {}
+            # rim.diameter is authoritative; wheel.rim_diameter may be a placeholder
+            rd_ts = _num(rim.get("diameter"))
+            if rd_ts is not None:
+                rd = rd_ts
+            # rim.width_nominal is available (approximated as section width in AC→SVJ)
+            rw_ts = _num(rim.get("width_nominal"))
+            if rw_ts is not None:
+                rw = rw_ts
+            # loaded_radius must be derived from overall_diameter (not stored directly)
+            if lr is None:
+                od = _num(dims.get("overall_diameter"))
+                if od is not None:
+                    lr = od / 2
     if rd is None and rw is None and lr is None:
         return None
     return (
@@ -253,6 +279,7 @@ def summarize_vehicle(doc: dict, source: str) -> dict[str, Any]:
     suspension = doc.get("suspension", {}) or {}
     powertrain = doc.get("powertrain", {}) or {}
     electric = doc.get("electric", {}) or {}
+    tires_sets = (doc.get("tires") or {}).get("sets") or {}
 
     # Chassis basics
     mass = _num(chassis.get("mass_total"))
@@ -302,7 +329,7 @@ def summarize_vehicle(doc: dict, source: str) -> dict[str, Any]:
         damper = corner.get("damper") or {}
         brake = corner.get("brake") or {}
         disc = brake.get("disc") if isinstance(brake, dict) else {}
-        key = _tire_key(wheel)
+        key = _tire_key(wheel, tires_sets)
         tires[c] = {
             "key": list(key) if key else None,
             "label": _tire_label(key) if key else None,
@@ -1015,6 +1042,7 @@ def sanity_check(doc: dict, source: str) -> list[dict]:
     powertrain = doc.get("powertrain", {}) or {}
     suspension = doc.get("suspension", {}) or {}
     electric   = doc.get("electric", {}) or {}
+    tires_sets = (doc.get("tires") or {}).get("sets") or {}
 
     wb    = _num(chassis.get("wheelbase"))
     cog   = chassis.get("center_of_gravity")
@@ -1038,14 +1066,16 @@ def sanity_check(doc: dict, source: str) -> list[dict]:
                  f"CoG height {height:.3f}m outside typical [0.15, 1.80]m range")
 
     # 3. Rim Ø < 2 × loaded radius per corner
+    #    Use tires.sets resolved values so AC→SVJ placeholder rim_diameter is handled.
     for c in CORNERS:
         corner = suspension.get(c) or {}
         wheel  = corner.get("wheel") or {}
-        rd = _num(wheel.get("rim_diameter"))
-        lr = _num(wheel.get("loaded_radius"))
-        if rd is not None and lr is not None and rd >= 2 * lr:
-            _add(f"tire_{c}_geometry", "error",
-                 f"{c}: rim_diameter {rd*1000:.0f}mm >= 2×loaded_radius {lr*1000:.0f}mm")
+        key = _tire_key(wheel, tires_sets)
+        if key and key[0] is not None and key[2] is not None:
+            rd_mm, _, lr_mm = key
+            if rd_mm >= 2 * lr_mm:
+                _add(f"tire_{c}_geometry", "error",
+                     f"{c}: rim_diameter {rd_mm:.0f}mm >= 2×loaded_radius {lr_mm:.0f}mm")
 
     # 4. Damper curves must be strictly monotonically increasing in x
     for c in CORNERS:
