@@ -4,6 +4,45 @@ This manual covers both delivery modes — the single-file HTML browser and the 
 
 ---
 
+## Quick start
+
+### HTML browser (no install)
+
+1. Locate `svj_library_browser.html` in the project folder.
+2. Double-click it — it opens in your default browser. Or right-click → *Open with* → choose Chrome, Edge, Firefox, or Safari.
+3. Drag your SVJ library (folder, `.zip`, or individual `.svj.json` files) onto the **drop bar** at the top of the page, or use the **Pick folder** / **Pick files** buttons.
+4. Done — all tabs are live immediately.
+
+> **No internet? No problem.** The file works offline once opened. The only online requirement is the first load of Plotly and JSZip from their CDN. For permanent air-gapped use, download both JS libraries and replace the two `<script src="…">` lines at the top of the HTML.
+
+### Python toolkit
+
+**Requirements:** Python 3.9 or later, plus one package:
+
+```bash
+pip install openpyxl
+```
+
+**Run it:**
+
+```bash
+# Point at a folder of .svj.json files (any depth of subfolders)
+python svj_analyze.py /path/to/your/svj_library --out ./report
+
+# Or point at a .zip archive
+python svj_analyze.py library_snapshot.zip --out ./report
+```
+
+Outputs land in `./report/`: an Excel workbook (`library.xlsx`) plus six JSON files. Drop `index.json` and `curves.json` from that folder onto the HTML browser for instant large-library browsing — no re-parsing needed.
+
+**Sanity checks only (no file output):**
+
+```bash
+python svj_analyze.py check /path/to/your/svj_library
+```
+
+---
+
 ## Contents
 
 1. [HTML browser](#1-html-browser)

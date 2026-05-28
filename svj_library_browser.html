@@ -156,6 +156,10 @@
   }
   .empty { color: var(--dim); font-size: 12px; padding: 40px; text-align: center; }
   .errors { color: var(--bad); font-size: 11px; padding: 8px; }
+  /* Virtual-scroll fixed row heights */
+  #tbody tr, #hm-tbody tr { height: 30px; }
+  #tbody td, #hm-tbody td { overflow: hidden; text-overflow: ellipsis; }
+  .info-banner { color: var(--blue); font-size: 11px; padding: 6px 8px; }
 </style>
 </head>
 <body>
@@ -164,7 +168,7 @@
   <h1>SVJ Library Browser</h1>
   <span class="sub">single-file · offline</span>
   <label class="dropzone" id="dz">
-    📁 drop a <b>folder</b> (any depth), a <b>.zip</b>, or <b>.svj.json</b> files here
+    📁 drop a <b>folder</b>, <b>.zip</b>, <b>.svj.json</b> files — or <b>index.json</b> + <b>curves.json</b> from a Python export
     <input type="file" id="folderInput" multiple webkitdirectory directory style="display:none;">
     <input type="file" id="fileInput"   multiple accept=".json,.svj.json,.zip" style="display:none;">
     <button class="btn" id="btnPickFolder" type="button">Pick folder</button>
@@ -205,7 +209,7 @@
         </label>
         <button class="btn" id="b-export-csv">Export CSV</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="index-wrap">
         <table id="tbl">
           <thead><tr id="thead-row"></tr></thead>
           <tbody id="tbody"></tbody>
@@ -637,7 +641,69 @@ const state = {
   pjSelected: new Set(),
   fpSelected: new Set(),
   hmSort: { k: "overall", dir: -1 },
+  indexRows: [],     // sorted/filtered rows for index virtual scroll
+  hmRows:    [],     // scored/sorted rows for heatmap virtual scroll
+  _fromBundle: false,
 };
+
+// -----------------------------------------------------------------------
+// Virtual scroll engine
+// -----------------------------------------------------------------------
+const VS_ROW_H = 30;   // px — must match CSS `#tbody tr { height: 30px }`
+const VS_BUF   = 25;   // extra rows rendered above and below the viewport
+const _vsReg   = {};   // wrapId → { tbodyId, rows, renderFn, ncols, onRowClick }
+
+function vsInit(wrapId) {
+  if (_vsReg[wrapId]) return;
+  _vsReg[wrapId] = {};
+  const wrap = document.getElementById(wrapId);
+  if (wrap) wrap.addEventListener("scroll", () => _vsFrame(wrapId));
+}
+
+/** Re-render the visible window of rows. */
+function _vsFrame(wrapId) {
+  const cfg = _vsReg[wrapId];
+  if (!cfg || !cfg.rows) return;
+  const wrap  = document.getElementById(wrapId);
+  const tbody = document.getElementById(cfg.tbodyId);
+  if (!wrap || !tbody) return;
+
+  const rows  = cfg.rows;
+  const total = rows.length;
+  const viewH = wrap.clientHeight;
+  const scrollY = wrap.scrollTop;
+  const theadH  = (wrap.querySelector("thead") || {offsetHeight: 34}).offsetHeight;
+  const first = Math.max(0, Math.floor((scrollY - theadH) / VS_ROW_H) - VS_BUF);
+  const last  = Math.min(total, Math.ceil((scrollY - theadH + viewH) / VS_ROW_H) + VS_BUF);
+  const nc    = cfg.ncols;
+  const topH  = first * VS_ROW_H;
+  const botH  = Math.max(0, (total - last) * VS_ROW_H);
+
+  let html = `<tr style="height:${topH}px"><td colspan="${nc}" style="padding:0;border:0"></td></tr>`;
+  for (let i = first; i < last; i++) html += cfg.renderFn(rows[i], i);
+  html += `<tr style="height:${botH}px"><td colspan="${nc}" style="padding:0;border:0"></td></tr>`;
+  tbody.innerHTML = html;
+
+  if (cfg.onRowClick) {
+    tbody.querySelectorAll("tr[data-src]").forEach(tr =>
+      tr.addEventListener("click", () => cfg.onRowClick(tr.dataset.src)));
+  }
+}
+
+/**
+ * Set or update rows for a virtual-scroll table, then render.
+ * wrapId     — id of the scrollable container (must contain a <thead>)
+ * tbodyId    — id of the <tbody> to write into
+ * rows       — array of data rows
+ * renderFn   — (row, index) → HTML string for one <tr>
+ * ncols      — number of columns (for spacer colspan)
+ * onRowClick — optional (src) → void click handler
+ */
+function vsFlush(wrapId, tbodyId, rows, renderFn, ncols, onRowClick) {
+  vsInit(wrapId);
+  Object.assign(_vsReg[wrapId], { tbodyId, rows, renderFn, ncols, onRowClick });
+  _vsFrame(wrapId);
+}
 
 const COLS = [
   {k:"make",  h:"Make"},
@@ -705,59 +771,70 @@ function applyFilters(rows) {
   });
 }
 
+function _renderIndexRow(v) {
+  const cells = COLS.map(c => {
+    let val = v[c.k];
+    if (c.fmt) val = c.fmt(val);
+    else if (val === null || val === undefined) val = "";
+    return `<td class="${c.num ? "num" : ""}">${val}</td>`;
+  }).join("");
+  return `<tr data-src="${v.source}">${cells}</tr>`;
+}
+
 function renderIndex() {
-  const tbody = document.getElementById("tbody");
   const empty = document.getElementById("empty-index");
-  if (!state.vehicles.length) { tbody.innerHTML = ""; empty.style.display = ""; return; }
+  if (!state.vehicles.length) {
+    document.getElementById("tbody").innerHTML = "";
+    empty.style.display = "";
+    return;
+  }
   empty.style.display = "none";
 
+  // Populate filter dropdowns once
   const drvSel = document.getElementById("f-drive");
   const topSel = document.getElementById("f-topo");
   if (drvSel.options.length <= 1) {
-    [...new Set(state.vehicles.map(v=>v.drive_type))].sort().forEach(x => {
+    [...new Set(state.vehicles.map(v => v.drive_type).filter(Boolean))].sort().forEach(x => {
       const o = document.createElement("option"); o.value = o.textContent = x; drvSel.appendChild(o);
     });
   }
   if (topSel.options.length <= 1) {
     const tops = new Set();
-    state.vehicles.forEach(v => { if(v.topology_front) tops.add(v.topology_front); if(v.topology_rear) tops.add(v.topology_rear); });
+    state.vehicles.forEach(v => {
+      if (v.topology_front) tops.add(v.topology_front);
+      if (v.topology_rear)  tops.add(v.topology_rear);
+    });
     [...tops].sort().forEach(x => {
       const o = document.createElement("option"); o.value = o.textContent = x; topSel.appendChild(o);
     });
   }
 
-  const rows = applyFilters(state.vehicles.slice()).sort((a,b) => {
+  // Sort
+  state.indexRows = applyFilters(state.vehicles.slice()).sort((a, b) => {
     const av = a[state.sortKey], bv = b[state.sortKey];
     if (av === bv) return 0;
     if (av === null || av === undefined) return 1;
     if (bv === null || bv === undefined) return -1;
-    if (typeof av === "number" && typeof bv === "number") return (av-bv)*state.sortDir;
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * state.sortDir;
     return String(av).localeCompare(String(bv)) * state.sortDir;
   });
 
+  // Sort indicators
   document.querySelectorAll("#thead-row th").forEach(th => {
-    th.classList.remove("sort-asc","sort-desc");
+    th.classList.remove("sort-asc", "sort-desc");
     if (th.dataset.k === state.sortKey)
       th.classList.add(state.sortDir > 0 ? "sort-asc" : "sort-desc");
   });
 
-  tbody.innerHTML = rows.map((v, i) => {
-    const cells = COLS.map(c => {
-      let val = v[c.k];
-      if (c.fmt) val = c.fmt(val);
-      else if (val === null || val === undefined) val = "";
-      return `<td class="${c.num?'num':''}">${val}</td>`;
-    }).join("");
-    return `<tr data-src="${v.source}">${cells}</tr>`;
-  }).join("");
-
-  tbody.querySelectorAll("tr").forEach(tr => {
-    tr.addEventListener("click", () => {
-      const v = state.vehicles.find(x => x.source === tr.dataset.src);
-      if (v) showDetail(v);
-    });
-  });
   document.getElementById("s-veh").textContent = state.vehicles.length;
+
+  vsFlush(
+    "index-wrap", "tbody",
+    state.indexRows,
+    _renderIndexRow,
+    COLS.length,
+    src => { const v = state.vehicles.find(x => x.source === src); if (v) showDetail(v); }
+  );
 }
 
 function renderTires() {
@@ -1431,6 +1508,58 @@ function _hmCellStyle(pct) {
   return { bg, fg, txt: p + "%" };
 }
 
+const HM_NCOLS = 2 + HEATMAP_GROUPS.length;  // Car + Overall + 9 groups
+
+function _buildHmRows() {
+  const { k: sk, dir: sd } = state.hmSort;
+  const rows = state.vehicles.map(v => {
+    const scores = {};
+    HEATMAP_GROUPS.forEach(g => {
+      try { scores[g.k] = g.fn(v); } catch (_) { scores[g.k] = 0; }
+    });
+    const vals = Object.values(scores).filter(x => x !== null);
+    scores._overall = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    return { v, scores, label: `${v.make} ${v.model} (${v.year ?? "?"})` };
+  });
+  rows.sort((a, b) => {
+    if (sk === "label" || !sk) return a.label.localeCompare(b.label) * sd;
+    const av = sk === "overall" ? a.scores._overall : a.scores[sk];
+    const bv = sk === "overall" ? b.scores._overall : b.scores[sk];
+    if (av === null && bv === null) return 0;
+    if (av === null) return sd;
+    if (bv === null) return -sd;
+    return (av - bv) * sd;
+  });
+  return rows;
+}
+
+function _renderHmRow(row) {
+  const ov = _hmCellStyle(row.scores._overall);
+  let html = `<tr>
+    <td style="padding:4px 12px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;left:0;background:var(--panel);z-index:1;max-width:260px;overflow:hidden;text-overflow:ellipsis;">${row.label}</td>
+    <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;background:${ov.bg};color:${ov.fg};">${ov.txt}</td>`;
+  HEATMAP_GROUPS.forEach(g => {
+    const c = _hmCellStyle(row.scores[g.k]);
+    html += `<td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;background:${c.bg};color:${c.fg};" title="${g.tip}: ${c.txt}">${c.txt}</td>`;
+  });
+  return html + `</tr>`;
+}
+
+function _buildHmHead() {
+  const thBase = "padding:7px 10px;text-align:center;color:var(--muted);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;font-size:10px;letter-spacing:.4px;text-transform:uppercase;";
+  const arr = k => state.hmSort.k === k ? (state.hmSort.dir > 0 ? " ▲" : " ▼") : "";
+  const act = k => state.hmSort.k === k ? "color:var(--accent);" : "";
+  let h = `<table id="hm-tbl" style="border-collapse:collapse;font-size:11px;width:100%;">
+    <thead><tr style="background:var(--panel2);position:sticky;top:0;z-index:2;">
+      <th style="${thBase}text-align:left;${act("label")}position:sticky;left:0;top:0;background:var(--panel2);z-index:3;"
+          onclick="window.hmSetSort('label')">Car${arr("label")}</th>
+      <th style="${thBase}${act("overall")}" onclick="window.hmSetSort('overall')" title="Mean of all groups">Overall${arr("overall")}</th>`;
+  HEATMAP_GROUPS.forEach(g => {
+    h += `<th style="${thBase}${act(g.k)}" onclick="window.hmSetSort('${g.k}')" title="${g.tip}">${g.label}${arr(g.k)}</th>`;
+  });
+  return h + `</tr></thead><tbody id="hm-tbody"></tbody></table>`;
+}
+
 function renderHeatmap() {
   const el    = document.getElementById("hmTable");
   const empty = document.getElementById("empty-heatmap");
@@ -1442,64 +1571,18 @@ function renderHeatmap() {
   }
   if (empty) empty.style.display = "none";
 
-  // Score every vehicle
-  const rows = state.vehicles.map(v => {
-    const scores = {};
-    HEATMAP_GROUPS.forEach(g => {
-      try { scores[g.k] = g.fn(v); } catch(_) { scores[g.k] = 0; }
-    });
-    const vals = Object.values(scores).filter(x => x !== null);
-    scores._overall = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    return { v, scores, label: `${v.make} ${v.model} (${v.year ?? "?"})` };
-  });
+  // Build or rebuild the table header (always rebuild so sort arrows update)
+  el.innerHTML = _buildHmHead();
 
-  // Sort
-  const { k: sk, dir: sd } = state.hmSort;
-  rows.sort((a, b) => {
-    if (sk === "label" || !sk) return a.label.localeCompare(b.label) * sd;
-    const av = sk === "overall" ? a.scores._overall : a.scores[sk];
-    const bv = sk === "overall" ? b.scores._overall : b.scores[sk];
-    if (av === null && bv === null) return 0;
-    if (av === null) return sd;
-    if (bv === null) return -sd;
-    return (av - bv) * sd;
-  });
-
-  const thBase = "padding:7px 10px;text-align:center;color:var(--muted);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;font-size:10px;letter-spacing:.4px;text-transform:uppercase;";
-  const sortArrow = (k) => state.hmSort.k === k ? (state.hmSort.dir > 0 ? " ▲" : " ▼") : "";
-  const thActive = (k) => state.hmSort.k === k ? "color:var(--accent);" : "";
-
-  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%;">
-    <thead><tr style="background:var(--panel2);">
-      <th style="${thBase}text-align:left;${thActive("label")}position:sticky;left:0;background:var(--panel2);z-index:3;"
-          onclick="window.hmSetSort('label')">Car${sortArrow("label")}</th>
-      <th style="${thBase}${thActive("overall")}" onclick="window.hmSetSort('overall')" title="Mean of all groups">Overall${sortArrow("overall")}</th>`;
-  HEATMAP_GROUPS.forEach(g => {
-    html += `<th style="${thBase}${thActive(g.k)}" onclick="window.hmSetSort('${g.k}')" title="${g.tip}">${g.label}${sortArrow(g.k)}</th>`;
-  });
-  html += `</tr></thead><tbody>`;
-
-  rows.forEach(row => {
-    const ov = _hmCellStyle(row.scores._overall);
-    html += `<tr>
-      <td style="padding:4px 12px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;left:0;background:var(--panel);z-index:1;">${row.label}</td>
-      <td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;background:${ov.bg};color:${ov.fg};">${ov.txt}</td>`;
-    HEATMAP_GROUPS.forEach(g => {
-      const c = _hmCellStyle(row.scores[g.k]);
-      html += `<td style="padding:4px 8px;border-bottom:1px solid var(--border);text-align:center;background:${c.bg};color:${c.fg};" title="${g.tip}: ${c.txt}">${c.txt}</td>`;
-    });
-    html += `</tr>`;
-  });
-  html += `</tbody></table>`;
-  el.innerHTML = html;
+  state.hmRows = _buildHmRows();
+  vsFlush("hmTable", "hm-tbody", state.hmRows, _renderHmRow, HM_NCOLS);
 }
 
-window.hmSetSort = function(k) {
+window.hmSetSort = function (k) {
   if (state.hmSort.k === k) {
     state.hmSort.dir *= -1;
   } else {
     state.hmSort.k = k;
-    // Default: Overall → descending (best first), others → ascending (worst first → easier QA)
     state.hmSort.dir = (k === "overall" || k === "label") ? -1 : 1;
   }
   renderHeatmap();
@@ -1796,8 +1879,95 @@ async function expandZip(zipFile) {
   return out;
 }
 
+// Bundle-load names we recognise from the Python export
+const BUNDLE_NAMES = ["index.json","tires.json","curves.json","fingerprint.json","heatmap.json"];
+
+async function ingestFromBundle(files) {
+  // files: { "index.json": File, "curves.json": File, ... }
+  const errEl = document.getElementById("err-area");
+  errEl.className = "info-banner";
+
+  // 1. Load index.json
+  let vehicles;
+  try {
+    const txt = await files["index.json"].text();
+    const parsed = JSON.parse(txt);
+    if (!Array.isArray(parsed) || !parsed[0]?.source)
+      throw new Error("does not look like an SVJ index.json — expected array with source field");
+    vehicles = parsed.map(v => {
+      // Ensure corners structure is compatible with JS expectations
+      if (!v.corners) v.corners = {};
+      for (const c of CORNERS) {
+        if (!v.corners[c]) v.corners[c] = {};
+        if (!Array.isArray(v.corners[c].damper_bump))    v.corners[c].damper_bump    = [];
+        if (!Array.isArray(v.corners[c].damper_rebound)) v.corners[c].damper_rebound = [];
+      }
+      if (!v.tires_by_corner) v.tires_by_corner = {};
+      for (const c of CORNERS) if (!v.tires_by_corner[c]) v.tires_by_corner[c] = {};
+      v.torque_curve = null;
+      v.power_curve  = null;
+      return v;
+    });
+  } catch (e) {
+    errEl.className = "errors";
+    errEl.textContent = `index.json: ${e.message}`;
+    return;
+  }
+
+  // 2. Merge curves.json if present (restores torque/power/damper curves)
+  let hasCurves = false;
+  if (files["curves.json"]) {
+    try {
+      const curveData = JSON.parse(await files["curves.json"].text());
+      const bySource = Object.fromEntries(vehicles.map(v => [v.source, v]));
+      for (const c of curveData) {
+        const v = bySource[c.source];
+        if (!v) continue;
+        if      (c.kind === "engine_torque")   { v.torque_curve = c.points; }
+        else if (c.kind === "engine_power")    { v.power_curve  = c.points; }
+        else if (c.kind === "damper_bump"    && c.corner) { v.corners[c.corner].damper_bump    = c.points; }
+        else if (c.kind === "damper_rebound" && c.corner) { v.corners[c.corner].damper_rebound = c.points; }
+      }
+      hasCurves = true;
+    } catch (_) { /* non-fatal */ }
+  }
+
+  state.vehicles    = vehicles;
+  state.tires       = buildTireCatalogue(vehicles);
+  state.errors      = [];
+  state.selected    = new Set(vehicles.map(v => v.source));
+  state.pjSelected  = new Set(vehicles.map(v => v.source));   // all selected; chart shows nothing for cars without Pacejka
+  state.fpSelected  = new Set(vehicles.map(v => v.source));
+  state._fromBundle = true;
+
+  renderIndex();
+  renderTires();
+  rebuildDiffPickers();
+  rebuildPacejkaPicker();
+  if (state.tab === "curves")  { rebuildCarPicker(); renderCurves(); }
+  if (state.tab === "heatmap") { renderHeatmap(); }
+
+  const n = vehicles.length;
+  const curvesNote = hasCurves
+    ? ""
+    : " · <span style='color:var(--warn)'>drop curves.json to enable Curves &amp; Fingerprint damper/torque axes</span>";
+  errEl.innerHTML =
+    `ℹ <b>Bundle mode</b> — ${n} cars loaded from index.json${curvesNote}`;
+}
+
 async function ingestFiles(fileList) {
   const raw = [...fileList];
+
+  // Detect Python-export bundle files (index.json etc.)
+  const bundleFiles = {};
+  for (const f of raw) {
+    if (BUNDLE_NAMES.includes(f.name)) bundleFiles[f.name] = f;
+  }
+  if (bundleFiles["index.json"]) {
+    await ingestFromBundle(bundleFiles);
+    return;
+  }
+
   const zips    = raw.filter(f => /\.zip$/i.test(f.name));
   const jsonish = raw.filter(f => /\.svj\.json$/i.test(f.name) || /\.json$/i.test(f.name));
 
@@ -1838,23 +2008,25 @@ async function ingestFiles(fileList) {
       errors.push({file: vf.path, error: e.message});
     }
   }
-  state.vehicles = vehicles;
-  state.tires = buildTireCatalogue(vehicles);
-  state.errors = errors;
-  state.selected   = new Set(vehicles.map(v => v.source));
-  state.pjSelected = new Set(vehicles.filter(v => v.has_pacejka).map(v => v.source));
-  state.fpSelected = new Set(vehicles.map(v => v.source));
+  state.vehicles    = vehicles;
+  state.tires       = buildTireCatalogue(vehicles);
+  state.errors      = errors;
+  state._fromBundle = false;
+  state.selected    = new Set(vehicles.map(v => v.source));
+  state.pjSelected  = new Set(vehicles.filter(v => v.has_pacejka).map(v => v.source));
+  state.fpSelected  = new Set(vehicles.map(v => v.source));
   renderIndex();
   renderTires();
   rebuildDiffPickers();
   rebuildPacejkaPicker();
-  if (state.tab === "curves")   { rebuildCarPicker(); renderCurves(); }
-  if (state.tab === "heatmap")  { renderHeatmap(); }
+  if (state.tab === "curves")  { rebuildCarPicker(); renderCurves(); }
+  if (state.tab === "heatmap") { renderHeatmap(); }
   const errEl = document.getElementById("err-area");
+  errEl.className = "errors";
   if (errors.length) {
-    errEl.innerHTML = `<b>${errors.length}</b> issue${errors.length>1?"s":""}: ` +
-      errors.slice(0,10).map(e => `${e.file}: ${e.error}`).join(" · ") +
-      (errors.length > 10 ? ` …(+${errors.length-10} more)` : "");
+    errEl.innerHTML = `<b>${errors.length}</b> issue${errors.length > 1 ? "s" : ""}: ` +
+      errors.slice(0, 10).map(e => `${e.file}: ${e.error}`).join(" · ") +
+      (errors.length > 10 ? ` …(+${errors.length - 10} more)` : "");
   } else {
     errEl.innerHTML = "";
   }
