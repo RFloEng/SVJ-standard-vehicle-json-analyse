@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-10-26
+
+### Added
+- **SVJ v0.100+ support** (`wheel_stations[]` + spring/damper `constraints[]`). `_corners()` in Python and `cornersOf()` in the HTML browser present both layouts in one shape, so summaries, curves, validation and sanity checks work on old and new files. Before this, a v0.100/0.103 library produced an empty tire catalogue.
+- **Tire library export** — `tires.svj.json`, a tires-only SVJ document with every `tires.sets` entry from all scanned files. Identical sets (description aside) are merged; same-name sets with different content are kept as `<name>__<hash6>`; Race07 slip curves are copied into the sets that use them. `TireLibrary` class, written by `run()`.
+
 ---
 
 ## [0.2.0] — 2026-05-27

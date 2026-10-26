@@ -25,6 +25,7 @@ anywhere. Feed it one or more inputs — each can be either:
 
     - index.json   : one row per vehicle, with the stats worth sorting on
     - tires.json   : unique tire footprints, with per-car attribution
+    - tires.svj.json : tires-only SVJ document, every tire set de-duplicated
     - curves.json  : engine torque, damper bump/rebound, spring rates
     - library.xlsx : 3-sheet workbook (Vehicles / Tires / Curves index)
 
@@ -35,14 +36,16 @@ Usage:
 
 from __future__ import annotations
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 import argparse
+import hashlib
 import json
 import math
 import sys
 import zipfile
 from collections import defaultdict
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -149,6 +152,53 @@ def _num(x) -> float | None:
 # ------------------------------------------------------------------------ #
 
 CORNERS = ("FL", "FR", "RL", "RR")
+
+
+def _corners(doc: dict) -> dict[str, dict]:
+    """Per-corner blocks in the legacy ``suspension.<FL|FR|RL|RR>`` shape.
+
+    SVJ <= 0.97 stores ``suspension.FL`` etc. directly; SVJ >= 0.100 moves the
+    wheel/tire/brake data to the ``wheel_stations`` list and the springs and
+    dampers to ``constraints`` entries whose id ends in ``_fl``/``_fr``/....
+    Both layouts are normalised here so every reader sees one shape.
+    """
+    legacy = doc.get("suspension")
+    if isinstance(legacy, dict) and any(c in legacy for c in CORNERS):
+        return legacy
+    stations = doc.get("wheel_stations")
+    if not isinstance(stations, list):
+        return {}
+    cons: dict[tuple[str, str], dict] = {}
+    for con in doc.get("constraints") or []:
+        if not isinstance(con, dict) or con.get("type") not in ("spring", "damper"):
+            continue
+        cid = str(con.get("id", "")).lower()
+        for c in CORNERS:
+            if cid.endswith("_" + c.lower()):
+                cons[(con["type"], c)] = con
+    out: dict[str, dict] = {}
+    for st in stations:
+        if not isinstance(st, dict):
+            continue
+        c = st.get("id") or st.get("name")
+        if c not in CORNERS:
+            continue
+        spring = cons.get(("spring", c)) or {}
+        damper = cons.get(("damper", c)) or {}
+        out[c] = {
+            "topology": {"system_type": st.get("topology_hint")},
+            "wheel": st.get("wheel") or {},
+            "tire": st.get("tire") or {},
+            "brake": st.get("brake") or {},
+            "spring": {"type": spring.get("spring_type"), "rate": spring.get("rate")},
+            "damper": {
+                "type": damper.get("x_damper_type") or damper.get("damper_type"),
+                "bump_curve": damper.get("bump_curve"),
+                "rebound_curve": damper.get("rebound_curve"),
+            },
+            "_est": bool(st.get("_est") or damper.get("_est")),
+        }
+    return out
 
 
 def _peak_of_curve(curve) -> tuple[float | None, float | None]:
@@ -276,7 +326,7 @@ def summarize_vehicle(doc: dict, source: str) -> dict[str, Any]:
     info = doc.get("vehicle_info", {}) or {}
     chassis = doc.get("chassis", {}) or {}
     steering = doc.get("steering", {}) or {}
-    suspension = doc.get("suspension", {}) or {}
+    suspension = _corners(doc)
     powertrain = doc.get("powertrain", {}) or {}
     electric = doc.get("electric", {}) or {}
     tires_sets = (doc.get("tires") or {}).get("sets") or {}
@@ -476,6 +526,89 @@ def build_tire_catalogue(vehicles: list[dict]) -> list[dict]:
     return out
 
 
+def _set_fingerprint(tset: dict) -> str:
+    """Content hash of a tire set, ignoring its free-text description."""
+    body = {k: v for k, v in tset.items() if k != "description"}
+    blob = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha1(blob.encode("utf-8")).hexdigest()
+
+
+class TireLibrary:
+    """Accumulates every ``tires.sets.*`` entry of many SVJ docs into one
+    de-duplicated, tires-only SVJ document.
+
+    Two sets with identical content (description aside) collapse to one entry.
+    A set that reuses a name but differs in content is kept under ``<name>__<hash6>``.
+    The Race07 slip curves a set refers to (LatCurve/BrakingCurve/TractiveCurve)
+    are copied into the set so each entry is self-contained.
+    """
+
+    def __init__(self) -> None:
+        self._by_hash: dict[str, str] = {}      # content hash -> library key
+        self._sets: dict[str, dict] = {}        # library key -> set
+        self.total_seen = 0
+
+    def add_doc(self, doc: dict, car_label: str, source: str) -> int:
+        tires = doc.get("tires")
+        if not isinstance(tires, dict):
+            return 0
+        sets = tires.get("sets")
+        if not isinstance(sets, dict):
+            return 0
+        curves = tires.get("x_race07_slip_curves")
+        added = 0
+        for name, raw in sets.items():
+            if not isinstance(raw, dict):
+                continue
+            self.total_seen += 1
+            tset = dict(raw)
+            x07 = tset.get("x_race07")
+            if isinstance(curves, dict) and isinstance(x07, dict):
+                used = {}
+                for ref in ("LatCurve", "BrakingCurve", "TractiveCurve"):
+                    cname = x07.get(ref)
+                    if cname in curves:
+                        used[cname] = curves[cname]
+                if used:
+                    tset["x_race07_slip_curves"] = used
+            h = _set_fingerprint(tset)
+            key = self._by_hash.get(h)
+            if key is None:
+                key = name if name not in self._sets else f"{name}__{h[:6]}"
+                self._by_hash[h] = key
+                tset["x_library"] = {"used_by": [], "source_names": [], "source_files": []}
+                self._sets[key] = tset
+                added += 1
+            lib = self._sets[key]["x_library"]
+            if car_label not in lib["used_by"]:
+                lib["used_by"].append(car_label)
+            if name not in lib["source_names"]:
+                lib["source_names"].append(name)
+            if source not in lib["source_files"]:
+                lib["source_files"].append(source)
+        return added
+
+    def to_document(self, inputs: list[str], vehicle_count: int) -> dict:
+        ordered = dict(sorted(self._sets.items()))
+        return {
+            "_metadata": {
+                "specification": "SVJ",
+                "version": "0.103",
+                "description": "Tire library: every tires.sets entry from the scanned "
+                               "SVJ files, de-duplicated. Tires only, no vehicle data.",
+                "author": f"svj_analyze {__version__}",
+                "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "x_library": {
+                    "inputs": inputs,
+                    "vehicles_scanned": vehicle_count,
+                    "tire_sets_seen": self.total_seen,
+                    "tire_sets_unique": len(ordered),
+                },
+            },
+            "tires": {"sets": ordered},
+        }
+
+
 def extract_curves(doc: dict, car_id: str) -> list[dict]:
     """Return a list of curve records — easy to plot later."""
     out = []
@@ -492,7 +625,7 @@ def extract_curves(doc: dict, car_id: str) -> list[dict]:
                         "derived": True})
 
     for c in CORNERS:
-        corner = _dig(doc, "suspension", c) or {}
+        corner = _corners(doc).get(c) or {}
         damper = corner.get("damper") or {}
         for k in ("bump_curve", "rebound_curve"):
             pts = damper.get(k)
@@ -1012,11 +1145,11 @@ def validate_svj(doc: dict, source: str) -> list[dict]:
         _err("chassis.wheelbase", f"Non-positive wheelbase: {wb}")
 
     # suspension: rim_diameter per corner
-    sus = doc.get("suspension") or {}
+    sus = _corners(doc)
     for c in CORNERS:
         rd = _num(_dig(sus, c, "wheel", "rim_diameter"))
         if rd is None:
-            _warn(f"suspension.{c}.wheel.rim_diameter",
+            _warn(f"wheel.{c}.rim_diameter",
                   "Missing wheel rim diameter")
 
     return issues
@@ -1040,7 +1173,7 @@ def sanity_check(doc: dict, source: str) -> list[dict]:
 
     chassis    = doc.get("chassis", {}) or {}
     powertrain = doc.get("powertrain", {}) or {}
-    suspension = doc.get("suspension", {}) or {}
+    suspension = _corners(doc)
     electric   = doc.get("electric", {}) or {}
     tires_sets = (doc.get("tires") or {}).get("sets") or {}
 
@@ -1157,6 +1290,7 @@ def run(inputs: list[Path] | Path, out_dir: Path,
     val_issues: list[dict] = []
     sources_scanned: list[str] = []
     scanned_count = 0
+    tire_lib = TireLibrary()
 
     for inp in inputs:
         try:
@@ -1179,6 +1313,7 @@ def run(inputs: list[Path] | Path, out_dir: Path,
                     vehicles.append(v)
                     car_id = f"{v['make']} {v['model']} ({v['year']})"
                     all_curves.extend(extract_curves(doc, car_id))
+                    tire_lib.add_doc(doc, car_id, src.display_name)
                 except Exception as e:
                     errors.append({"file": src.display_name,
                                    "error": f"summarize: {e}"})
@@ -1211,6 +1346,9 @@ def run(inputs: list[Path] | Path, out_dir: Path,
         json.dumps(fingerprints, indent=2, ensure_ascii=False), encoding="utf-8")
     (out_dir / "heatmap.json").write_text(
         json.dumps(heatmap, indent=2, ensure_ascii=False), encoding="utf-8")
+    (out_dir / "tires.svj.json").write_text(
+        json.dumps(tire_lib.to_document(sources_scanned, len(vehicles)),
+                   indent=1, ensure_ascii=False), encoding="utf-8")
     if errors:
         (out_dir / "errors.json").write_text(
             json.dumps(errors, indent=2), encoding="utf-8")
@@ -1226,6 +1364,8 @@ def run(inputs: list[Path] | Path, out_dir: Path,
         "scanned_files": scanned_count,
         "vehicles": len(vehicles),
         "unique_tires": len(tires),
+        "tire_sets_seen": tire_lib.total_seen,
+        "tire_sets_unique": len(tire_lib._sets),
         "curves": len(all_curves),
         "errors": len(errors),
         "out_dir": str(out_dir),
@@ -1310,6 +1450,9 @@ def _main_check(argv: list[str]) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     _argv: list[str] = sys.argv[1:] if argv is None else list(argv)
+    for stream in (sys.stdout, sys.stderr):  # file names may be non-ASCII (Windows cp1252)
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     if _argv and _argv[0] == "check":
         return _main_check(_argv[1:])
     return _main_run(_argv)

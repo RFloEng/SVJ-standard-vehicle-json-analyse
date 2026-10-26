@@ -8,7 +8,7 @@ Two tools, one set of algorithms:
 | `svj_analyze.py` | Python CLI. Scans a folder or `.zip` of `*.svj.json` files and writes a 5-sheet Excel workbook plus six JSON exports. |
 | `svj_library_browser.html` | Single-file offline browser. Drop a folder, zip, or individual files onto it and explore your entire library without installing anything. |
 
-Tested on SVJ spec v0.94–v0.97 across the nine bundled examples (Alfa 75, BMW E30, Citroën 2CV, Corvette C3, F1 open-wheel, 4WD pickup, AWD EV sedan, FF hatchback, tire spec). Zero errors.
+Reads both SVJ layouts: the legacy `suspension.<corner>` form (spec v0.94–v0.97) and the `wheel_stations` + `constraints` form (v0.100+). Tested on the bundled examples and on a 2 046-file library (Assetto Corsa, Richard Burns Rally and Race07 conversions; not distributed here). Zero errors.
 
 ---
 
@@ -60,6 +60,7 @@ python svj_analyze.py check /path/to/svj/library
 | `library.xlsx` | 5-sheet workbook: Vehicles · Tires · Curves · Fingerprint · Heatmap |
 | `index.json` | Full per-vehicle summary records |
 | `tires.json` | Unique tire footprints with car attribution |
+| `tires.svj.json` | **Tire library**: a tires-only SVJ document (`tires.sets`) with every tire set from the scanned files, de-duplicated; each set carries `x_library.used_by` |
 | `curves.json` | Every extracted curve with metadata |
 | `fingerprint.json` | 9-axis normalised handling fingerprint, one record per car |
 | `heatmap.json` | Per-subtree completeness scores, one record per car |

@@ -28,3 +28,6 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Generated tire library (may contain third-party game data; anonymize before sharing)
+tire_library/

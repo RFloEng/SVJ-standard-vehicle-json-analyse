@@ -397,6 +397,36 @@
 // Minimal SVJ analysis — mirrors svj_analyze.py semantics.
 // ----------------------------------------------------------------------
 const CORNERS = ["FL","FR","RL","RR"];
+
+// Per-corner blocks in the legacy suspension.<corner> shape. SVJ >= 0.100 keeps
+// wheel/tire/brake in wheel_stations[] and springs/dampers in constraints[]
+// (ids ending _fl/_fr/_rl/_rr). Mirrors _corners() in svj_analyze.py.
+function cornersOf(doc) {
+  const leg = doc.suspension;
+  if (leg && typeof leg === "object" && CORNERS.some(c => c in leg)) return leg;
+  if (!Array.isArray(doc.wheel_stations)) return {};
+  const cons = {};
+  for (const k of (doc.constraints || [])) {
+    if (!k || (k.type !== "spring" && k.type !== "damper")) continue;
+    const id = String(k.id || "").toLowerCase();
+    for (const c of CORNERS) if (id.endsWith("_" + c.toLowerCase())) cons[k.type + ":" + c] = k;
+  }
+  const out = {};
+  for (const st of doc.wheel_stations) {
+    const c = st && (st.id || st.name);
+    if (!CORNERS.includes(c)) continue;
+    const sp = cons["spring:" + c] || {}, da = cons["damper:" + c] || {};
+    out[c] = {
+      topology: { system_type: st.topology_hint },
+      wheel: st.wheel || {}, tire: st.tire || {}, brake: st.brake || {},
+      spring: { type: sp.spring_type, rate: sp.rate },
+      damper: { type: da.x_damper_type || da.damper_type,
+                bump_curve: da.bump_curve, rebound_curve: da.rebound_curve },
+      _est: !!(st._est || da._est),
+    };
+  }
+  return out;
+}
 const num = x => {
   if (x === null || x === undefined) return null;
   const n = +x;
@@ -464,7 +494,7 @@ const tireLabel = k => {
 function summarize(doc, source) {
   const meta = doc._metadata || {}, info = doc.vehicle_info || {},
         ch = doc.chassis || {}, st = doc.steering || {},
-        sus = doc.suspension || {}, pt = doc.powertrain || {},
+        sus = cornersOf(doc), pt = doc.powertrain || {},
         el = doc.electric || {};
   const mass = num(ch.mass_total), wb = num(ch.wheelbase);
   const cog = ch.center_of_gravity;
