@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
 import zipfile
 from collections import defaultdict
@@ -533,6 +534,70 @@ def _set_fingerprint(tset: dict) -> str:
     return hashlib.sha1(blob.encode("utf-8")).hexdigest()
 
 
+_ANON_DROP_KEYS = {"description", "external_models", "csp", "_note", "_source", "_source_params",
+                   "performance_curve"}
+_ANON_BANNED = re.compile(
+    r"assetto|\bAC\b|\bACC\b|race\s*-?07|\brbr\b|richard|burns|simbin|tyres\.ini|\.tyr\b"
+    r"|virtual_bench|\bngp\d|converter|kunos|content shaders|\bcsp\b",
+    re.IGNORECASE)
+
+
+def _prune_vendor(obj: Any) -> Any:
+    """Copy of *obj* without vendor extensions (``x_*``), free-text notes,
+    descriptions and the AC-specific ``csp`` block, at every depth."""
+    if isinstance(obj, dict):
+        return {k: _prune_vendor(v) for k, v in obj.items()
+                if not (k.startswith("x_") or k in _ANON_DROP_KEYS)}
+    if isinstance(obj, list):
+        return [_prune_vendor(v) for v in obj]
+    return obj
+
+
+def _tire_size_block(tset: dict, wheel: dict | None) -> dict:
+    """Clean size record: tire dimensions plus rim size (taken from the wheel
+    when the set itself carries none, e.g. Race07)."""
+    dims = tset.get("dimensions") or {}
+    rim = tset.get("rim") or {}
+    wheel = wheel or {}
+    sw = _num(dims.get("section_width"))
+    ar = _num(dims.get("aspect_ratio"))
+    od = _num(dims.get("overall_diameter"))
+    rd = _num(rim.get("diameter"))
+    if rd is None:
+        rd = _num(wheel.get("rim_diameter"))
+    if rd is None and _num(dims.get("rim_radius")) is not None:
+        rd = _num(dims.get("rim_radius")) * 2
+    rw = _num(wheel.get("rim_width"))
+    rw_est = bool(wheel.get("_est_rim_width"))
+    if rw is None:
+        rw = _num(rim.get("width_nominal"))
+        rw_est = rw is not None
+    code = tset.get("size_code")
+    if not code and sw and ar and rd:
+        code = f"{sw * 1000:.0f}/{ar * 100:.0f}R{rd / 0.0254:.0f}"
+    size: dict[str, Any] = {}
+    for k, v in (("size_code", code), ("section_width_m", sw), ("aspect_ratio", ar),
+                 ("rim_diameter_m", rd), ("rim_diameter_in", rd / 0.0254 if rd else None),
+                 ("rim_width_m", rw), ("rim_width_in", rw / 0.0254 if rw else None),
+                 ("overall_diameter_m", od), ("tread_width_m", _num(dims.get("tread_width")))):
+        if v is not None:
+            size[k] = round(v, 4) if isinstance(v, float) else v
+    if rw is not None and rw_est:
+        size["rim_width_estimated"] = True
+    return size
+
+
+def _tire_slug(size: dict) -> str:
+    code = size.get("size_code")
+    if code:
+        return re.sub(r"[^a-z0-9]+", "_", code.lower()).strip("_")
+    od = size.get("overall_diameter_m")
+    rd = size.get("rim_diameter_in")
+    if not od:
+        return "unsized"
+    return f"od{od * 1000:.0f}" + (f"_rim{rd:.0f}" if rd else "")
+
+
 class TireLibrary:
     """Accumulates every ``tires.sets.*`` entry of many SVJ docs into one
     de-duplicated, tires-only SVJ document.
@@ -543,7 +608,9 @@ class TireLibrary:
     are copied into the set so each entry is self-contained.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, anonymize: bool = False) -> None:
+        self.anonymize = anonymize
+        self._cars: dict[str, set] = {}         # library key -> distinct car labels
         self._by_hash: dict[str, str] = {}      # content hash -> library key
         self._sets: dict[str, dict] = {}        # library key -> set
         self.total_seen = 0
@@ -557,10 +624,37 @@ class TireLibrary:
             return 0
         curves = tires.get("x_race07_slip_curves")
         added = 0
+        corners = _corners(doc)
+        ref_wheel: dict[str, dict] = {}
+        for co in corners.values():
+            ref = (co.get("wheel") or {}).get("set_ref") or (co.get("tire") or {}).get("set_ref")
+            if ref:
+                ref_wheel.setdefault(ref, co.get("wheel") or {})
         for name, raw in sets.items():
             if not isinstance(raw, dict):
                 continue
             self.total_seen += 1
+            if self.anonymize:
+                wheel = ref_wheel.get(name)
+                if wheel is None:
+                    axle = "RL" if "rear" in name.lower() else "FL"
+                    wheel = (corners.get(axle) or {}).get("wheel")
+                tset = _prune_vendor(raw)
+                tset["size"] = _tire_size_block(raw, wheel)
+                if isinstance(tset.get("rim"), dict):
+                    tset["rim"].pop("width_nominal", None)  # size.rim_width_m replaces it
+                tset["description"] = (tset["size"].get("size_code")
+                                       or _tire_slug(tset["size"])) + " tire"
+                h = _set_fingerprint(tset)
+                key = self._by_hash.get(h)
+                if key is None:
+                    key = f"tire_{_tire_slug(tset['size'])}_{h[:6]}"
+                    self._by_hash[h] = key
+                    self._sets[key] = tset
+                    self._cars[key] = set()
+                    added += 1
+                self._cars[key].add(car_label)
+                continue
             tset = dict(raw)
             x07 = tset.get("x_race07")
             if isinstance(curves, dict) and isinstance(x07, dict):
@@ -590,6 +684,21 @@ class TireLibrary:
 
     def to_document(self, inputs: list[str], vehicle_count: int) -> dict:
         ordered = dict(sorted(self._sets.items()))
+        if self.anonymize:
+            for k, t in ordered.items():
+                t["x_library"] = {"vehicle_count": len(self._cars[k])}
+            return {
+                "_metadata": {
+                    "specification": "SVJ",
+                    "version": "0.103",
+                    "description": "Tire library: de-duplicated tire sets with size, rim "
+                                   "and Pacejka data. Tires only, no vehicle data.",
+                    "author": f"svj_analyze {__version__}",
+                    "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "x_library": {"anonymized": True, "tire_sets_unique": len(ordered)},
+                },
+                "tires": {"sets": ordered},
+            }
         return {
             "_metadata": {
                 "specification": "SVJ",
@@ -1276,7 +1385,7 @@ def sanity_check(doc: dict, source: str) -> list[dict]:
 # ------------------------------------------------------------------------ #
 
 def run(inputs: list[Path] | Path, out_dir: Path,
-        validate: bool = False) -> dict[str, Any]:
+        validate: bool = False, anonymize_tires: bool = False) -> dict[str, Any]:
     """Scan one or more inputs (folders and/or .zip archives) and write
     index.json, tires.json, curves.json, errors.json, library.xlsx to out_dir.
     """
@@ -1290,7 +1399,7 @@ def run(inputs: list[Path] | Path, out_dir: Path,
     val_issues: list[dict] = []
     sources_scanned: list[str] = []
     scanned_count = 0
-    tire_lib = TireLibrary()
+    tire_lib = TireLibrary(anonymize=anonymize_tires)
 
     for inp in inputs:
         try:
@@ -1346,9 +1455,13 @@ def run(inputs: list[Path] | Path, out_dir: Path,
         json.dumps(fingerprints, indent=2, ensure_ascii=False), encoding="utf-8")
     (out_dir / "heatmap.json").write_text(
         json.dumps(heatmap, indent=2, ensure_ascii=False), encoding="utf-8")
-    (out_dir / "tires.svj.json").write_text(
-        json.dumps(tire_lib.to_document(sources_scanned, len(vehicles)),
-                   indent=1, ensure_ascii=False), encoding="utf-8")
+    tire_doc = tire_lib.to_document(sources_scanned, len(vehicles))
+    tire_text = json.dumps(tire_doc, indent=1, ensure_ascii=False)
+    if anonymize_tires:
+        hits = sorted({m.group(0).lower() for m in _ANON_BANNED.finditer(tire_text)})
+        if hits:
+            raise RuntimeError(f"anonymisation left identifying text: {hits}")
+    (out_dir / "tires.svj.json").write_text(tire_text, encoding="utf-8")
     if errors:
         (out_dir / "errors.json").write_text(
             json.dumps(errors, indent=2), encoding="utf-8")
@@ -1385,12 +1498,16 @@ def _main_run(argv: list[str]) -> int:
     ap.add_argument("--validate", action="store_true",
                     help="Run structural validation on each file; write "
                          "validation.json to the output directory.")
+    ap.add_argument("--anonymize-tires", action="store_true",
+                    help="Write tires.svj.json without game names, descriptions, vendor "
+                         "(x_*) blocks or car/source attribution; adds a clean size block.")
     args = ap.parse_args(argv)
     for p in args.inputs:
         if not p.exists():
             print(f"error: not found: {p}", file=sys.stderr)
             return 2
-    report = run(args.inputs, args.out, validate=args.validate)
+    report = run(args.inputs, args.out, validate=args.validate,
+                 anonymize_tires=args.anonymize_tires)
     print(json.dumps(report, indent=2))
     return 0
 

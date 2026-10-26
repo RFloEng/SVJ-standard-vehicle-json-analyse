@@ -51,6 +51,9 @@ python svj_analyze.py folder_a snapshot.zip folder_b --out ./report
 
 # Physical sanity checks only (no XLSX)
 python svj_analyze.py check /path/to/svj/library
+
+# Tire library without car/game attribution (safe to share)
+python svj_analyze.py /path/to/svj/library --out ./report --anonymize-tires
 ```
 
 ### Outputs written to `./report/`
@@ -60,7 +63,7 @@ python svj_analyze.py check /path/to/svj/library
 | `library.xlsx` | 5-sheet workbook: Vehicles · Tires · Curves · Fingerprint · Heatmap |
 | `index.json` | Full per-vehicle summary records |
 | `tires.json` | Unique tire footprints with car attribution |
-| `tires.svj.json` | **Tire library**: a tires-only SVJ document (`tires.sets`) with every tire set from the scanned files, de-duplicated; each set carries `x_library.used_by` |
+| `tires.svj.json` | **Tire library**: a tires-only SVJ document (`tires.sets`) with every tire set from the scanned files, de-duplicated; each set carries `x_library.used_by`. With `--anonymize-tires`: no car names, source files, game names, descriptions or vendor (`x_*`) blocks; every set gets a clean `size` block (size code, rim Ø/width, overall Ø) |
 | `curves.json` | Every extracted curve with metadata |
 | `fingerprint.json` | 9-axis normalised handling fingerprint, one record per car |
 | `heatmap.json` | Per-subtree completeness scores, one record per car |

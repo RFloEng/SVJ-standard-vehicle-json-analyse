@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **SVJ v0.100+ support** (`wheel_stations[]` + spring/damper `constraints[]`). `_corners()` in Python and `cornersOf()` in the HTML browser present both layouts in one shape, so summaries, curves, validation and sanity checks work on old and new files. Before this, a v0.100/0.103 library produced an empty tire catalogue.
 - **Tire library export** — `tires.svj.json`, a tires-only SVJ document with every `tires.sets` entry from all scanned files. Identical sets (description aside) are merged; same-name sets with different content are kept as `<name>__<hash6>`; Race07 slip curves are copied into the sets that use them. `TireLibrary` class, written by `run()`.
+- **`--anonymize-tires`** — tire library with no car names, source files, game names, descriptions, vendor `x_*` blocks, game file names or AC-specific `csp` block. Adds a clean `size` block (size code, rim diameter/width, overall diameter; rim taken from the wheel where the set has none) and fails the run if identifying text remains.
 
 ---
 
